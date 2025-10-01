@@ -170,15 +170,13 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
+// Enable Swagger for all environments for debugging
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "EV Charging System API v1");
-        c.RoutePrefix = "swagger"; // Set Swagger UI at /swagger endpoint
-    });
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "EV Charging System API v1");
+    c.RoutePrefix = "swagger"; // Set Swagger UI at /swagger endpoint
+});
 
 app.UseHttpsRedirection();
 

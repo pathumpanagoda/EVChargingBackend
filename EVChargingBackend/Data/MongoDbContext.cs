@@ -67,12 +67,8 @@ public class MongoDbContext
                 new CreateIndexOptions { Unique = true, Name = "username_unique" }
             );
 
-            // EVOwners collection indexes
-            await CreateIndexIfNotExistsAsync(
-                EVOwners,
-                Builders<EVOwner>.IndexKeys.Ascending(e => e.NIC),
-                new CreateIndexOptions { Unique = true, Name = "nic_unique" }
-            );
+            // EVOwners collection indexes - NIC is already the _id field, so no need for separate unique index
+            // The _id field is automatically unique in MongoDB
 
             // ChargingStations collection indexes
             await CreateIndexIfNotExistsAsync(
@@ -148,21 +144,35 @@ public class MongoDbContext
         try
         {
             var existingIndexes = await collection.Indexes.ListAsync();
-            var indexNames = new List<string>();
+            var indexList = await existingIndexes.ToListAsync();
             
-            await existingIndexes.ForEachAsync(index => 
+            // Check if an index with the same name already exists
+            var indexExists = indexList.Any(index => 
+                index.TryGetElement("name", out var nameElement) && 
+                nameElement.Value.AsString == options.Name);
+
+            // Also check if there's an index with the same key pattern but different name
+            var keyExists = indexList.Any(index => 
             {
-                if (index.TryGetElement("name", out var nameElement))
+                if (index.TryGetElement("key", out var keyElement))
                 {
-                    indexNames.Add(nameElement.Value.AsString);
+                    var keyDoc = keyElement.Value.AsBsonDocument;
+                    // Compare key patterns (simplified comparison)
+                    return keyDoc.ElementCount == keys.Render(collection.DocumentSerializer, collection.Settings.SerializerRegistry).ElementCount;
                 }
+                return false;
             });
 
-            if (!indexNames.Contains(options.Name))
+            if (!indexExists && !keyExists)
             {
                 await collection.Indexes.CreateOneAsync(
                     new CreateIndexModel<T>(keys, options)
                 );
+                Console.WriteLine($"Successfully created index: {options.Name}");
+            }
+            else
+            {
+                Console.WriteLine($"Index already exists or similar key pattern found: {options.Name}");
             }
         }
         catch (Exception ex)
