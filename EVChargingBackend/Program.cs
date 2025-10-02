@@ -178,10 +178,14 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger"; // Set Swagger UI at /swagger endpoint
 });
 
-app.UseHttpsRedirection();
-
-// CORS
+// CORS - Must be before HTTPS redirection
 app.UseCors("AllowOrigins");
+
+// Disable HTTPS redirection in development to avoid CORS issues
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 // Error handling middleware
 app.UseErrorHandling();
