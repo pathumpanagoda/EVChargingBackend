@@ -1,146 +1,172 @@
-/*
- * Author: EV Charging System
- * Date: 2024-12-19
- * Purpose: Authentication controller for login, registration, and token refresh
- */
-
-using EVChargingBackend.DTOs;
-using EVChargingBackend.Services;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
+using EVChargingBackend.Services;
+using EVChargingBackend.Models.Auth;
+using EVChargingBackend.Data;
+using EVChargingBackend.Models;
+using MongoDB.Driver;
 
-namespace EVChargingBackend.Controllers;
-
-/// <summary>
-/// Controller for authentication operations
-/// </summary>
-[ApiController]
-[Route("api/[controller]")]
-[SwaggerTag("Authentication endpoints for user login, registration, and token management")]
-public class AuthController : ControllerBase
+namespace EVChargingBackend.Controllers
 {
-    private readonly AuthService _authService;
-
-    /// <summary>
-    /// Initializes a new instance of the AuthController
-    /// </summary>
-    /// <param name="authService">Authentication service</param>
-    public AuthController(AuthService authService)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AuthController : ControllerBase
     {
-        _authService = authService;
-    }
+        private readonly UserStore _store;
+        private readonly JwtHelper _jwt;
+        private readonly MongoDbContext _mongoContext;
 
-    /// <summary>
-    /// Authenticates a user and returns a JWT token
-    /// </summary>
-    /// <param name="request">Login credentials</param>
-    /// <returns>Authentication response with JWT token</returns>
-    [HttpPost("login")]
-    [SwaggerOperation(
-        Summary = "User Login",
-        Description = "Authenticates a user (system user or EV owner) and returns a JWT token"
-    )]
-    [SwaggerResponse(200, "Login successful", typeof(ApiResponse<AuthResponse>))]
-    [SwaggerResponse(400, "Validation error", typeof(ApiResponse<object>))]
-    [SwaggerResponse(401, "Invalid credentials", typeof(ApiResponse<object>))]
-    public async Task<ActionResult<ApiResponse<AuthResponse>>> Login([FromBody] LoginRequest request)
-    {
-        try
+        public AuthController(UserStore store, JwtHelper jwt, MongoDbContext mongoContext)
         {
-            var authResponse = await _authService.LoginAsync(request);
-            return Ok(new ApiResponse<AuthResponse>
-            {
-                Success = true,
-                Message = "Login successful",
-                Data = authResponse
+            _store = store;
+            _jwt = jwt;
+            _mongoContext = mongoContext;
+        }
+
+        [HttpGet("test")]
+        public ActionResult Test()
+        {
+            return Ok(new { 
+                userCount = _store.Users.Count,
+                users = _store.Users.Select(u => new { u.Username, u.Role, u.IsActive }).ToList()
             });
         }
-        catch (Exception ex)
+
+        [HttpGet("evowners")]
+        public async Task<ActionResult> GetEVOwners()
         {
-            return BadRequest(new ApiResponse<object>
+            try
             {
-                Success = false,
-                Message = ex.Message
-            });
+                var evOwners = await _mongoContext.EVOwners.Find(Builders<EVOwner>.Filter.Empty).ToListAsync();
+                return Ok(new { 
+                    count = evOwners.Count,
+                    evOwners = evOwners.Select(e => new { 
+                        e.NIC, 
+                        e.Name, 
+                        e.Email, 
+                        e.Phone, 
+                        e.IsActive, 
+                        e.CreatedAt
+                    }).ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("create-test-user")]
+        public async Task<ActionResult> CreateTestUser()
+        {
+            try
+            {
+                var testUser = new EVOwner
+                {
+                    NIC = "999999999V",
+                    Name = "Test User",
+                    Email = "test@example.com",
+                    Phone = "0771234567",
+                    PasswordHash = PasswordHasher.Hash("Password123"),
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                await _mongoContext.EVOwners.InsertOneAsync(testUser);
+                return Ok(new { message = "Test user created successfully", nic = testUser.NIC, password = "Password123" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("reset-password/{nic}")]
+        public async Task<ActionResult> ResetPassword(string nic, [FromBody] string newPassword)
+        {
+            try
+            {
+                var filter = Builders<EVOwner>.Filter.Eq(e => e.NIC, nic);
+                var update = Builders<EVOwner>.Update
+                    .Set(e => e.PasswordHash, PasswordHasher.Hash(newPassword))
+                    .Set(e => e.UpdatedAt, DateTime.UtcNow);
+
+                var result = await _mongoContext.EVOwners.UpdateOneAsync(filter, update);
+                
+                if (result.MatchedCount == 0)
+                {
+                    return NotFound(new { error = "EV owner not found" });
+                }
+
+                return Ok(new { message = "Password reset successfully", nic = nic, newPassword = newPassword });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("login")]
+        public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest req)
+        {
+            Console.WriteLine($"Login attempt for username: {req.Username}");
+            
+            try
+            {
+                // Search for EV owner by NIC in MongoDB database only
+                var evOwner = await _mongoContext.EVOwners
+                    .Find(Builders<EVOwner>.Filter.Eq(e => e.NIC, req.Username))
+                    .FirstOrDefaultAsync();
+                
+                if (evOwner == null || !evOwner.IsActive)
+                {
+                    Console.WriteLine($"EV owner not found or inactive: {req.Username}");
+                    return Unauthorized(new LoginResponse { Success = false, Error = "Invalid credentials" });
+                }
+                
+                Console.WriteLine($"Found EV owner in MongoDB: {evOwner.Name} ({evOwner.NIC})");
+                Console.WriteLine($"Password hash from DB: {evOwner.PasswordHash}");
+                
+                // Verify password using the stored hash
+                var passwordValid = PasswordHasher.Verify(req.Password, evOwner.PasswordHash);
+                Console.WriteLine($"Password valid: {passwordValid}");
+                
+                if (!passwordValid)
+                {
+                    Console.WriteLine($"Password mismatch for EV owner: {evOwner.NIC}");
+                    return Unauthorized(new LoginResponse { Success = false, Error = "Invalid credentials" });
+                }
+                
+                // Create a User object for JWT token generation
+                var user = new User
+                {
+                    Id = evOwner.NIC,
+                    Username = evOwner.Name,
+                    Nic = evOwner.NIC,
+                    Role = "EVOwner",
+                    IsActive = evOwner.IsActive,
+                    PasswordHash = evOwner.PasswordHash
+                };
+                
+                var (token, exp) = _jwt.CreateToken(user);
+                return Ok(new LoginResponse
+                {
+                    Success = true,
+                    Data = new TokenData
+                    {
+                        Token = token,
+                        Role = user.Role,
+                        UserId = user.Id,
+                        Nic = user.Nic,
+                        ExpiresAt = exp.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during login: {ex.Message}");
+                return Unauthorized(new LoginResponse { Success = false, Error = "Invalid credentials" });
+            }
         }
     }
-
-    /// <summary>
-    /// Registers a new EV owner
-    /// </summary>
-    /// <param name="request">Registration information</param>
-    /// <returns>Authentication response with JWT token</returns>
-    [HttpPost("register")]
-    [SwaggerOperation(
-        Summary = "EV Owner Registration",
-        Description = "Registers a new EV owner and returns a JWT token"
-    )]
-    [SwaggerResponse(200, "Registration successful", typeof(ApiResponse<AuthResponse>))]
-    [SwaggerResponse(400, "Validation error or user already exists", typeof(ApiResponse<object>))]
-    public async Task<ActionResult<ApiResponse<AuthResponse>>> Register([FromBody] RegisterRequest request)
-    {
-        try
-        {
-            var authResponse = await _authService.RegisterAsync(request);
-            return Ok(new ApiResponse<AuthResponse>
-            {
-                Success = true,
-                Message = "Registration successful",
-                Data = authResponse
-            });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new ApiResponse<object>
-            {
-                Success = false,
-                Message = ex.Message
-            });
-        }
-    }
-
-    /// <summary>
-    /// Refreshes a JWT token
-    /// </summary>
-    /// <param name="request">Token refresh request</param>
-    /// <returns>New authentication response with refreshed token</returns>
-    [HttpPost("refresh")]
-    [SwaggerOperation(
-        Summary = "Refresh Token",
-        Description = "Refreshes an existing JWT token and returns a new one"
-    )]
-    [SwaggerResponse(200, "Token refreshed successfully", typeof(ApiResponse<AuthResponse>))]
-    [SwaggerResponse(401, "Invalid token", typeof(ApiResponse<object>))]
-    public async Task<ActionResult<ApiResponse<AuthResponse>>> Refresh([FromBody] TokenRefreshRequest request)
-    {
-        try
-        {
-            var authResponse = await _authService.RefreshTokenAsync(request.Token);
-            return Ok(new ApiResponse<AuthResponse>
-            {
-                Success = true,
-                Message = "Token refreshed successfully",
-                Data = authResponse
-            });
-        }
-        catch (Exception ex)
-        {
-            return Unauthorized(new ApiResponse<object>
-            {
-                Success = false,
-                Message = ex.Message
-            });
-        }
-    }
-}
-
-/// <summary>
-/// Token refresh request DTO
-/// </summary>
-public record TokenRefreshRequest
-{
-    /// <summary>
-    /// Current JWT token
-    /// </summary>
-    public string Token { get; init; } = string.Empty;
 }

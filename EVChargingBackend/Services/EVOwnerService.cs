@@ -73,6 +73,38 @@ public class EVOwnerService
     }
 
     /// <summary>
+    /// Creates a test EV owner for development purposes
+    /// </summary>
+    /// <returns>True if test EV owner was created, false if already exists</returns>
+    public async Task<bool> CreateTestEVOwnerAsync()
+    {
+        const string testNIC = "123456789V";
+        
+        if (await _evOwnerRepository.ExistsAsync(e => e.NIC == testNIC))
+        {
+            Console.WriteLine($"Test EV owner with NIC {testNIC} already exists");
+            return false;
+        }
+
+        var testEVOwner = new EVOwner
+        {
+            NIC = testNIC,
+            Name = "Test EV Owner",
+            Email = "test@evowner.com",
+            Phone = "0771234567",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Test123!"),
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        Console.WriteLine($"Creating test EV owner with NIC {testNIC}");
+        await _evOwnerRepository.CreateAsync(testEVOwner);
+        Console.WriteLine($"Test EV owner created successfully");
+        return true;
+    }
+
+    /// <summary>
     /// Gets an EV owner by NIC
     /// </summary>
     /// <param name="nic">NIC</param>

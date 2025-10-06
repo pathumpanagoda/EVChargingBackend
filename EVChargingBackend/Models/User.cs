@@ -51,6 +51,12 @@ public class User
     public bool IsActive { get; set; } = true;
 
     /// <summary>
+    /// National Identity Card number
+    /// </summary>
+    [BsonElement("nic")]
+    public string Nic { get; set; } = string.Empty;
+
+    /// <summary>
     /// Timestamp when the user was created
     /// </summary>
     [BsonElement("created_at")]

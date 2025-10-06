@@ -267,6 +267,66 @@ public class ChargingStationController : ControllerBase
     }
 
     /// <summary>
+    /// Gets station availability for a specific date
+    /// </summary>
+    /// <param name="stationId">Station ID</param>
+    /// <param name="date">Optional date to check availability (defaults to current time)</param>
+    /// <returns>Station availability information</returns>
+    [HttpGet("availability")]
+    [SwaggerOperation(
+        Summary = "Get Station Availability",
+        Description = "Gets availability information for a charging station at a specific date"
+    )]
+    [SwaggerResponse(200, "Availability information retrieved successfully", typeof(ApiResponse<object>))]
+    [SwaggerResponse(400, "Invalid station ID", typeof(ApiResponse<object>))]
+    public async Task<ActionResult<ApiResponse<object>>> GetAvailability([FromQuery] string stationId, [FromQuery] DateTime? date)
+    {
+        if (string.IsNullOrWhiteSpace(stationId))
+        {
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "stationId is required"
+            });
+        }
+
+        var dt = date ?? DateTime.UtcNow;
+
+        try
+        {
+            // TODO: Replace stubs with real queries
+            // Fetch station, schedule, and existing bookings at/around 'dt'
+            var hasCapacity = true; // stub
+            var nextSlots = new[]
+            {
+                new { start = dt.AddMinutes(15), end = dt.AddMinutes(45) },
+                new { start = dt.AddMinutes(60), end = dt.AddMinutes(90) }
+            };
+
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Message = "Availability information retrieved successfully",
+                Data = new
+                {
+                    stationId,
+                    date = dt,
+                    isAvailable = hasCapacity,
+                    nextSlots
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = ex.Message
+            });
+        }
+    }
+
+    /// <summary>
     /// Deactivates a charging station
     /// </summary>
     /// <param name="id">Station ID</param>
