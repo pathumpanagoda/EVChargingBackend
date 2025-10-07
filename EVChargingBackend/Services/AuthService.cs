@@ -125,7 +125,8 @@ public class AuthService
             Token = token,
             ExpiresAt = expiresAt,
             Role = "EVOwner",
-            UserId = evOwner.NIC
+            UserId = evOwner.NIC,
+            Nic = evOwner.NIC
         };
     }
 
@@ -241,7 +242,8 @@ public class AuthService
             Token = token,
             ExpiresAt = expiresAt,
             Role = "EVOwner",
-            UserId = evOwner.NIC
+            UserId = evOwner.NIC,
+            Nic = evOwner.NIC
         };
     }
 }
