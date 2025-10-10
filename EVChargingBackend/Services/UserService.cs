@@ -14,17 +14,17 @@ using System.Linq.Expressions;
 
 namespace EVChargingBackend.Services;
 
-/// <summary>
+
 /// Service for managing system users
-/// </summary>
+
 public class UserService
 {
     private readonly UserRepository _userRepository;
     private readonly UserRequestValidator _userValidator;
 
-    /// <summary>
+    
     /// Initializes a new instance of the UserService
-    /// </summary>
+    
     /// <param name="userRepository">User repository</param>
     /// <param name="userValidator">User request validator</param>
     public UserService(UserRepository userRepository, UserRequestValidator userValidator)
@@ -33,9 +33,9 @@ public class UserService
         _userValidator = userValidator;
     }
 
-    /// <summary>
+    
     /// Creates a new system user
-    /// </summary>
+    
     /// <param name="request">User creation request</param>
     /// <returns>Created user</returns>
     public async Task<User> CreateUserAsync(UserRequest request)
@@ -66,9 +66,9 @@ public class UserService
         return await _userRepository.CreateAsync(user);
     }
 
-    /// <summary>
+    
     /// Gets a user by ID
-    /// </summary>
+    
     /// <param name="id">User ID</param>
     /// <returns>User if found, null otherwise</returns>
     public async Task<User?> GetUserAsync(string id)
@@ -76,9 +76,9 @@ public class UserService
         return await _userRepository.GetByIdAsync(id);
     }
 
-    /// <summary>
+    
     /// Gets paginated users with optional filtering
-    /// </summary>
+    
     /// <param name="page">Page number</param>
     /// <param name="pageSize">Page size</param>
     /// <param name="search">Search term</param>
@@ -109,9 +109,9 @@ public class UserService
         };
     }
 
-    /// <summary>
+    
     /// Updates a user
-    /// </summary>
+    
     /// <param name="id">User ID</param>
     /// <param name="request">User update request</param>
     /// <returns>Updated user if found, null otherwise</returns>
@@ -151,9 +151,9 @@ public class UserService
         return await _userRepository.UpdateAsync(id, user);
     }
 
-    /// <summary>
+    
     /// Deletes a user (soft delete by setting inactive)
-    /// </summary>
+    
     /// <param name="id">User ID</param>
     /// <returns>True if deleted, false if not found</returns>
     public async Task<bool> DeleteUserAsync(string id)
@@ -170,9 +170,9 @@ public class UserService
         return true;
     }
 
-    /// <summary>
+    
     /// Creates a default admin user if none exists
-    /// </summary>
+    
     /// <returns>True if admin was created, false if already exists</returns>
     public async Task<bool> CreateDefaultAdminAsync()
     {
@@ -195,61 +195,61 @@ public class UserService
     }
 }
 
-/// <summary>
+
 /// User request DTO for creation
-/// </summary>
+
 public record UserRequest
 {
-    /// <summary>
+    
     /// Username
-    /// </summary>
+    
     public string Username { get; init; } = string.Empty;
 
-    /// <summary>
+    
     /// Password
-    /// </summary>
+    
     public string Password { get; init; } = string.Empty;
 
-    /// <summary>
+    
     /// User role
-    /// </summary>
+    
     public string Role { get; init; } = string.Empty;
 }
 
-/// <summary>
+
 /// User update request DTO
-/// </summary>
+
 public record UserUpdateRequest
 {
-    /// <summary>
+    
     /// Username
-    /// </summary>
+    
     public string? Username { get; init; }
 
-    /// <summary>
+    
     /// Password
-    /// </summary>
+    
     public string? Password { get; init; }
 
-    /// <summary>
+    
     /// User role
-    /// </summary>
+    
     public string? Role { get; init; }
 
-    /// <summary>
+    
     /// Active status
-    /// </summary>
+    
     public bool? IsActive { get; init; }
 }
 
-/// <summary>
+
 /// Validator for UserRequest DTO
-/// </summary>
+
 public class UserRequestValidator : AbstractValidator<UserRequest>
 {
-    /// <summary>
+    
     /// Initializes a new instance of the UserRequestValidator
-    /// </summary>
+    
     public UserRequestValidator()
     {
         RuleFor(x => x.Username)

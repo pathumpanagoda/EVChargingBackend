@@ -14,9 +14,9 @@ using FluentValidation;
 
 namespace EVChargingBackend.Services;
 
-/// <summary>
+
 /// Service for managing bookings with business rule enforcement
-/// </summary>
+
 public class BookingService
 {
     private readonly BookingRepository _bookingRepository;
@@ -28,9 +28,9 @@ public class BookingService
     private readonly BookingUpdateRequestValidator _updateValidator;
     private readonly BookingCompleteRequestValidator _completeValidator;
 
-    /// <summary>
+    
     /// Initializes a new instance of the BookingService
-    /// </summary>
+    
     /// <param name="bookingRepository">Booking repository</param>
     /// <param name="stationRepository">Charging station repository</param>
     /// <param name="evOwnerRepository">EV owner repository</param>
@@ -59,9 +59,9 @@ public class BookingService
         _completeValidator = completeValidator;
     }
 
-    /// <summary>
+    
     /// Creates a new booking
-    /// </summary>
+    
     /// <param name="request">Booking creation request</param>
     /// <param name="evOwnerNIC">EV owner NIC</param>
     /// <returns>Created booking</returns>
@@ -125,9 +125,9 @@ public class BookingService
         return await _bookingRepository.CreateAsync(booking);
     }
 
-    /// <summary>
+    
     /// Gets a booking by ID
-    /// </summary>
+    
     /// <param name="id">Booking ID</param>
     /// <returns>Booking if found, null otherwise</returns>
     public async Task<Booking?> GetBookingAsync(string id)
@@ -135,9 +135,9 @@ public class BookingService
         return await _bookingRepository.GetByIdAsync(id);
     }
 
-    /// <summary>
+    
     /// Gets bookings for an EV owner
-    /// </summary>
+    
     /// <param name="evOwnerNIC">EV owner NIC</param>
     /// <param name="includeHistory">Include historical bookings</param>
     /// <returns>Collection of bookings for the EV owner</returns>
@@ -146,9 +146,9 @@ public class BookingService
         return await _bookingRepository.GetByEVOwnerAsync(evOwnerNIC, includeHistory);
     }
 
-    /// <summary>
+    
     /// Gets dashboard statistics for an EV owner
-    /// </summary>
+    
     /// <param name="evOwnerNIC">EV owner NIC</param>
     /// <returns>Dashboard statistics</returns>
     public async Task<DashboardResponse> GetDashboardStatsAsync(string evOwnerNIC)
@@ -162,9 +162,9 @@ public class BookingService
         };
     }
 
-    /// <summary>
+    
     /// Updates a booking
-    /// </summary>
+    
     /// <param name="id">Booking ID</param>
     /// <param name="request">Booking update request</param>
     /// <param name="evOwnerNIC">EV owner NIC (for authorization)</param>
@@ -228,9 +228,9 @@ public class BookingService
         return await _bookingRepository.UpdateAsync(id, booking);
     }
 
-    /// <summary>
+    
     /// Cancels a booking
-    /// </summary>
+    
     /// <param name="id">Booking ID</param>
     /// <param name="evOwnerNIC">EV owner NIC (for authorization)</param>
     /// <returns>True if cancelled, false if not found or not authorized</returns>
@@ -263,9 +263,9 @@ public class BookingService
         return true;
     }
 
-    /// <summary>
+    
     /// Approves a booking (Backoffice/Operator only)
-    /// </summary>
+    
     /// <param name="id">Booking ID</param>
     /// <returns>Updated booking if found, null otherwise</returns>
     public async Task<Booking?> ApproveBookingAsync(string id)
@@ -307,9 +307,9 @@ public class BookingService
         return await _bookingRepository.UpdateAsync(id, booking);
     }
 
-    /// <summary>
+    
     /// Completes a booking via QR scan
-    /// </summary>
+    
     /// <param name="request">Booking complete request with QR payload</param>
     /// <returns>Updated booking if found and valid, null otherwise</returns>
     public async Task<Booking?> CompleteBookingAsync(BookingCompleteRequest request)
@@ -347,9 +347,9 @@ public class BookingService
         return await _bookingRepository.UpdateAsync(bookingInfo.BookingId, booking);
     }
 
-    /// <summary>
+    
     /// Gets paginated bookings with optional filtering
-    /// </summary>
+    
     /// <param name="page">Page number</param>
     /// <param name="pageSize">Page size</param>
     /// <param name="evOwnerNIC">Optional EV owner NIC filter</param>
@@ -369,9 +369,9 @@ public class BookingService
         };
     }
 
-    /// <summary>
+    
     /// Gets the available slots for a specific date from the station's schedule
-    /// </summary>
+    
     /// <param name="station">Charging station</param>
     /// <param name="date">Date to check</param>
     /// <returns>Number of available slots for the date</returns>

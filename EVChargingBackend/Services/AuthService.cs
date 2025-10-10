@@ -13,9 +13,9 @@ using FluentValidation;
 
 namespace EVChargingBackend.Services;
 
-/// <summary>
+
 /// Service for handling authentication operations
-/// </summary>
+
 public class AuthService
 {
     private readonly UserRepository _userRepository;
@@ -24,9 +24,9 @@ public class AuthService
     private readonly LoginRequestValidator _loginValidator;
     private readonly RegisterRequestValidator _registerValidator;
 
-    /// <summary>
+    
     /// Initializes a new instance of the AuthService
-    /// </summary>
+    
     /// <param name="userRepository">User repository</param>
     /// <param name="evOwnerRepository">EV owner repository</param>
     /// <param name="jwtHelper">JWT helper</param>
@@ -46,9 +46,9 @@ public class AuthService
         _registerValidator = registerValidator;
     }
 
-    /// <summary>
+    
     /// Authenticates a user and returns a JWT token
-    /// </summary>
+    
     /// <param name="request">Login request</param>
     /// <returns>Authentication response with token</returns>
     public async Task<AuthResponse> LoginAsync(LoginRequest request)
@@ -77,9 +77,9 @@ public class AuthService
         throw new UnauthorizedAccessException("Invalid username or password");
     }
 
-    /// <summary>
+    
     /// Registers a new EV owner
-    /// </summary>
+    
     /// <param name="request">Registration request</param>
     /// <returns>Authentication response with token</returns>
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
@@ -130,9 +130,9 @@ public class AuthService
         };
     }
 
-    /// <summary>
+    
     /// Refreshes a JWT token
-    /// </summary>
+    
     /// <param name="token">Current token</param>
     /// <returns>New authentication response</returns>
     public async Task<AuthResponse> RefreshTokenAsync(string token)
@@ -188,9 +188,9 @@ public class AuthService
         }
     }
 
-    /// <summary>
+    
     /// Authenticates a system user
-    /// </summary>
+    
     /// <param name="user">User entity</param>
     /// <param name="password">Plain text password</param>
     /// <returns>Authentication response</returns>
@@ -217,9 +217,9 @@ public class AuthService
         };
     }
 
-    /// <summary>
+    
     /// Authenticates an EV owner
-    /// </summary>
+    
     /// <param name="evOwner">EV owner entity</param>
     /// <param name="password">Plain text password</param>
     /// <returns>Authentication response</returns>

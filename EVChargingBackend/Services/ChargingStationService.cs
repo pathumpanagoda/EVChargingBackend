@@ -13,9 +13,9 @@ using FluentValidation;
 
 namespace EVChargingBackend.Services;
 
-/// <summary>
+
 /// Service for managing charging stations
-/// </summary>
+
 public class ChargingStationService
 {
     private readonly ChargingStationRepository _stationRepository;
@@ -23,9 +23,9 @@ public class ChargingStationService
     private readonly ChargingStationRequestValidator _stationValidator;
     private readonly StationScheduleRequestValidator _scheduleValidator;
 
-    /// <summary>
+    
     /// Initializes a new instance of the ChargingStationService
-    /// </summary>
+    
     /// <param name="stationRepository">Charging station repository</param>
     /// <param name="bookingQueries">Booking queries</param>
     /// <param name="stationValidator">Station request validator</param>
@@ -42,9 +42,9 @@ public class ChargingStationService
         _scheduleValidator = scheduleValidator;
     }
 
-    /// <summary>
+    
     /// Creates a new charging station
-    /// </summary>
+    
     /// <param name="request">Station creation request</param>
     /// <returns>Created charging station</returns>
     public async Task<ChargingStation> CreateStationAsync(ChargingStationRequest request)
@@ -78,9 +78,9 @@ public class ChargingStationService
         return await _stationRepository.CreateAsync(station);
     }
 
-    /// <summary>
+    
     /// Gets a charging station by ID
-    /// </summary>
+    
     /// <param name="id">Station ID</param>
     /// <returns>Charging station if found, null otherwise</returns>
     public async Task<ChargingStation?> GetStationAsync(string id)
@@ -88,9 +88,9 @@ public class ChargingStationService
         return await _stationRepository.GetByIdAsync(id);
     }
 
-    /// <summary>
+    
     /// Gets active charging stations with optional filtering
-    /// </summary>
+    
     /// <param name="page">Page number</param>
     /// <param name="pageSize">Page size</param>
     /// <param name="type">Station type filter</param>
@@ -109,9 +109,9 @@ public class ChargingStationService
         };
     }
 
-    /// <summary>
+    
     /// Gets nearby charging stations within a specified distance
-    /// </summary>
+    
     /// <param name="latitude">Latitude coordinate</param>
     /// <param name="longitude">Longitude coordinate</param>
     /// <param name="maxDistanceKm">Maximum distance in kilometers</param>
@@ -122,9 +122,9 @@ public class ChargingStationService
         return await _stationRepository.GetNearbyStationsAsync(latitude, longitude, maxDistanceKm, limit);
     }
 
-    /// <summary>
+    
     /// Updates a charging station
-    /// </summary>
+    
     /// <param name="id">Station ID</param>
     /// <param name="request">Station update request</param>
     /// <returns>Updated charging station if found, null otherwise</returns>
@@ -161,9 +161,9 @@ public class ChargingStationService
         return await _stationRepository.UpdateAsync(id, station);
     }
 
-    /// <summary>
+    
     /// Updates the daily schedule for a charging station
-    /// </summary>
+    
     /// <param name="id">Station ID</param>
     /// <param name="request">Schedule update request</param>
     /// <returns>Updated charging station if found, null otherwise</returns>
@@ -194,9 +194,9 @@ public class ChargingStationService
         return await _stationRepository.UpdateAsync(id, station);
     }
 
-    /// <summary>
+    
     /// Deactivates a charging station
-    /// </summary>
+    
     /// <param name="id">Station ID</param>
     /// <returns>True if deactivated, false if not found or has active bookings</returns>
     public async Task<bool> DeactivateStationAsync(string id)
@@ -218,9 +218,9 @@ public class ChargingStationService
         return true;
     }
 
-    /// <summary>
+    
     /// Activates a charging station
-    /// </summary>
+    
     /// <param name="id">Station ID</param>
     /// <returns>True if activated, false if not found</returns>
     public async Task<bool> ActivateStationAsync(string id)
@@ -236,9 +236,9 @@ public class ChargingStationService
         return true;
     }
 
-    /// <summary>
+    
     /// Gets charging stations by type
-    /// </summary>
+    
     /// <param name="type">Station type (AC/DC)</param>
     /// <returns>Collection of charging stations of the specified type</returns>
     public async Task<IEnumerable<ChargingStation>> GetStationsByTypeAsync(string type)

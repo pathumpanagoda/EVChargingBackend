@@ -12,17 +12,17 @@ using FluentValidation;
 
 namespace EVChargingBackend.Services;
 
-/// <summary>
+
 /// Service for managing EV owners
-/// </summary>
+
 public class EVOwnerService
 {
     private readonly EVOwnerRepository _evOwnerRepository;
     private readonly EVOwnerRequestValidator _evOwnerValidator;
 
-    /// <summary>
+    
     /// Initializes a new instance of the EVOwnerService
-    /// </summary>
+    
     /// <param name="evOwnerRepository">EV owner repository</param>
     /// <param name="evOwnerValidator">EV owner request validator</param>
     public EVOwnerService(EVOwnerRepository evOwnerRepository, EVOwnerRequestValidator evOwnerValidator)
@@ -31,9 +31,9 @@ public class EVOwnerService
         _evOwnerValidator = evOwnerValidator;
     }
 
-    /// <summary>
+    
     /// Creates a new EV owner (by Backoffice)
-    /// </summary>
+    
     /// <param name="request">EV owner creation request</param>
     /// <returns>Created EV owner</returns>
     public async Task<EVOwner> CreateEVOwnerAsync(EVOwnerRequest request)
@@ -72,9 +72,9 @@ public class EVOwnerService
         return await _evOwnerRepository.CreateAsync(evOwner);
     }
 
-    /// <summary>
+    
     /// Gets an EV owner by NIC
-    /// </summary>
+    
     /// <param name="nic">NIC</param>
     /// <returns>EV owner if found, null otherwise</returns>
     public async Task<EVOwner?> GetEVOwnerAsync(string nic)
@@ -82,9 +82,9 @@ public class EVOwnerService
         return await _evOwnerRepository.GetByIdAsync(nic);
     }
 
-    /// <summary>
+    
     /// Gets paginated EV owners with optional search
-    /// </summary>
+    
     /// <param name="page">Page number</param>
     /// <param name="pageSize">Page size</param>
     /// <param name="search">Search term</param>
@@ -102,9 +102,9 @@ public class EVOwnerService
         };
     }
 
-    /// <summary>
+    
     /// Updates an EV owner
-    /// </summary>
+    
     /// <param name="nic">NIC</param>
     /// <param name="request">EV owner update request</param>
     /// <returns>Updated EV owner if found, null otherwise</returns>
@@ -142,9 +142,9 @@ public class EVOwnerService
         return await _evOwnerRepository.UpdateAsync(nic, evOwner);
     }
 
-    /// <summary>
+    
     /// Deactivates an EV owner
-    /// </summary>
+    
     /// <param name="nic">NIC</param>
     /// <returns>True if deactivated, false if not found</returns>
     public async Task<bool> DeactivateEVOwnerAsync(string nic)
@@ -161,9 +161,9 @@ public class EVOwnerService
         return true;
     }
 
-    /// <summary>
+    
     /// Reactivates an EV owner (Backoffice only)
-    /// </summary>
+    
     /// <param name="nic">NIC</param>
     /// <returns>True if reactivated, false if not found</returns>
     public async Task<bool> ReactivateEVOwnerAsync(string nic)
