@@ -11,12 +11,12 @@ namespace EVChargingBackend.Helpers;
 
 
 /// Document filter to ensure OpenAPI version is properly set
-/// </summary>
+
 public class OpenApiVersionFilter : IDocumentFilter
 {
     
     /// Applies the document filter to ensure OpenAPI version is set
-    /// </summary>
+    
     /// <param name="swaggerDoc">The OpenAPI document</param>
     /// <param name="context">The document filter context</param>
     public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)

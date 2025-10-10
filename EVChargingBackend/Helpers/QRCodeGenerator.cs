@@ -11,25 +11,25 @@ using System.Text;
 
 namespace EVChargingBackend.Helpers;
 
-/// <summary>
+
 /// Helper class for QR code generation and validation
-/// </summary>
+
 public class QRCodeGenerator
 {
     private readonly bool _generatePngImages;
 
-    /// <summary>
+    
     /// Initializes a new instance of the QRCodeGenerator
-    /// </summary>
+    
     /// <param name="generatePngImages">Whether to generate PNG images or just payload strings</param>
     public QRCodeGenerator(bool generatePngImages = false)
     {
         _generatePngImages = generatePngImages;
     }
 
-    /// <summary>
+    
     /// Generates a QR payload string for a booking
-    /// </summary>
+    
     /// <param name="booking">Booking to generate QR for</param>
     /// <returns>QR payload string</returns>
     public string GetPayload(Booking booking)
@@ -39,9 +39,9 @@ public class QRCodeGenerator
         return $"{payload}:{hash}";
     }
 
-    /// <summary>
+    
     /// Generates a QR payload string for a booking ID
-    /// </summary>
+    
     /// <param name="bookingId">Booking ID</param>
     /// <param name="evOwnerNIC">EV owner NIC</param>
     /// <param name="stationId">Station ID</param>
@@ -53,9 +53,9 @@ public class QRCodeGenerator
         return $"{payload}:{hash}";
     }
 
-    /// <summary>
+    
     /// Generates a QR code PNG image as base64 string
-    /// </summary>
+    
     /// <param name="payload">QR payload string</param>
     /// <returns>Base64 encoded PNG image</returns>
     public string GetPngBase64(string payload)
@@ -74,9 +74,9 @@ public class QRCodeGenerator
         return Convert.ToBase64String(imageBytes);
     }
 
-    /// <summary>
+    
     /// Validates a QR payload string
-    /// </summary>
+    
     /// <param name="payload">QR payload string to validate</param>
     /// <returns>True if valid, false otherwise</returns>
     public bool ValidatePayload(string payload)
@@ -105,9 +105,9 @@ public class QRCodeGenerator
         }
     }
 
-    /// <summary>
+    
     /// Extracts booking information from a QR payload
-    /// </summary>
+    
     /// <param name="payload">QR payload string</param>
     /// <returns>Booking information if valid, null otherwise</returns>
     public QRBookingInfo? ExtractBookingInfo(string payload)
@@ -134,9 +134,9 @@ public class QRCodeGenerator
         }
     }
 
-    /// <summary>
+    
     /// Computes SHA256 hash of a string
-    /// </summary>
+    
     /// <param name="input">Input string</param>
     /// <returns>SHA256 hash as hexadecimal string</returns>
     private static string ComputeSHA256Hash(string input)
@@ -148,28 +148,28 @@ public class QRCodeGenerator
     }
 }
 
-/// <summary>
+
 /// Booking information extracted from QR payload
-/// </summary>
+
 public class QRBookingInfo
 {
-    /// <summary>
+    
     /// Booking ID
-    /// </summary>
+    
     public string BookingId { get; set; } = string.Empty;
 
-    /// <summary>
+    
     /// EV owner NIC
-    /// </summary>
+    
     public string EVOwnerNIC { get; set; } = string.Empty;
 
-    /// <summary>
+    
     /// Station ID
-    /// </summary>
+    
     public string StationId { get; set; } = string.Empty;
 
-    /// <summary>
+    
     /// Hash for verification
-    /// </summary>
+    
     public string Hash { get; set; } = string.Empty;
 }

@@ -9,14 +9,14 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace EVChargingBackend.Helpers;
 
-/// <summary>
+
 /// Schema filter to ensure OpenAPI version is properly set
-/// </summary>
+
 public class OpenApiVersionSchemaFilter : ISchemaFilter
 {
-    /// <summary>
+    
     /// Applies the schema filter to ensure OpenAPI version is set
-    /// </summary>
+    
     /// <param name="schema">The OpenAPI schema</param>
     /// <param name="context">The schema filter context</param>
     public void Apply(OpenApiSchema schema, SchemaFilterContext context)

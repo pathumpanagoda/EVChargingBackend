@@ -12,17 +12,17 @@ using System.Text.Json;
 
 namespace EVChargingBackend.Middleware;
 
-/// <summary>
+
 /// Middleware for handling exceptions and returning consistent error responses
-/// </summary>
+
 public class ErrorHandlingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ErrorHandlingMiddleware> _logger;
 
-    /// <summary>
+    
     /// Initializes a new instance of the ErrorHandlingMiddleware
-    /// </summary>
+    
     /// <param name="next">Next middleware in the pipeline</param>
     /// <param name="logger">Logger instance</param>
     public ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandlingMiddleware> logger)
@@ -31,9 +31,9 @@ public class ErrorHandlingMiddleware
         _logger = logger;
     }
 
-    /// <summary>
+    
     /// Invokes the middleware
-    /// </summary>
+    
     /// <param name="context">HTTP context</param>
     /// <returns>Task representing the middleware execution</returns>
     public async Task InvokeAsync(HttpContext context)
@@ -49,9 +49,9 @@ public class ErrorHandlingMiddleware
         }
     }
 
-    /// <summary>
+    
     /// Handles exceptions and returns appropriate HTTP responses
-    /// </summary>
+    
     /// <param name="context">HTTP context</param>
     /// <param name="exception">Exception to handle</param>
     /// <returns>Task representing the exception handling</returns>
@@ -156,14 +156,14 @@ public class ErrorHandlingMiddleware
     }
 }
 
-/// <summary>
+
 /// Extension methods for registering the error handling middleware
-/// </summary>
+
 public static class ErrorHandlingMiddlewareExtensions
 {
-    /// <summary>
+    
     /// Adds the error handling middleware to the application pipeline
-    /// </summary>
+    
     /// <param name="builder">Application builder</param>
     /// <returns>Application builder</returns>
     public static IApplicationBuilder UseErrorHandling(this IApplicationBuilder builder)
