@@ -15,9 +15,9 @@ using System.Security.Claims;
 
 namespace EVChargingBackend.Controllers;
 
-/// <summary>
+
 /// Controller for EV owner management operations
-/// </summary>
+
 [ApiController]
 [Route("api/[controller]")]
 [SwaggerTag("EV Owner management endpoints")]
@@ -25,18 +25,18 @@ public class EVOwnerController : ControllerBase
 {
     private readonly EVOwnerService _evOwnerService;
 
-    /// <summary>
+    
     /// Initializes a new instance of the EVOwnerController
-    /// </summary>
+    
     /// <param name="evOwnerService">EV owner service</param>
     public EVOwnerController(EVOwnerService evOwnerService)
     {
         _evOwnerService = evOwnerService;
     }
 
-    /// <summary>
+    
     /// Creates a new EV owner (Backoffice only)
-    /// </summary>
+    
     /// <param name="request">EV owner creation request</param>
     /// <returns>Created EV owner</returns>
     [HttpPost]
@@ -71,9 +71,9 @@ public class EVOwnerController : ControllerBase
         }
     }
 
-    /// <summary>
+    
     /// Gets an EV owner by NIC
-    /// </summary>
+    
     /// <param name="nic">NIC</param>
     /// <returns>EV owner if found</returns>
     [HttpGet("{nic}")]
@@ -112,9 +112,9 @@ public class EVOwnerController : ControllerBase
         });
     }
 
-    /// <summary>
+    
     /// Gets paginated EV owners with optional search
-    /// </summary>
+    
     /// <param name="page">Page number</param>
     /// <param name="pageSize">Page size</param>
     /// <param name="search">Search term</param>
@@ -142,9 +142,9 @@ public class EVOwnerController : ControllerBase
         });
     }
 
-    /// <summary>
+    
     /// Updates an EV owner
-    /// </summary>
+    
     /// <param name="nic">NIC</param>
     /// <param name="request">EV owner update request</param>
     /// <returns>Updated EV owner if found</returns>
@@ -196,9 +196,9 @@ public class EVOwnerController : ControllerBase
         }
     }
 
-    /// <summary>
+    
     /// Deactivates an EV owner
-    /// </summary>
+    
     /// <param name="nic">NIC</param>
     /// <returns>Success status</returns>
     [HttpPost("{nic}/deactivate")]
@@ -236,9 +236,9 @@ public class EVOwnerController : ControllerBase
         });
     }
 
-    /// <summary>
+    
     /// Reactivates an EV owner (Backoffice only)
-    /// </summary>
+    
     /// <param name="nic">NIC</param>
     /// <returns>Success status</returns>
     [HttpPost("{nic}/reactivate")]
@@ -270,9 +270,9 @@ public class EVOwnerController : ControllerBase
         });
     }
 
-    /// <summary>
+    
     /// Checks if the current user is authorized to access EV owner data
-    /// </summary>
+    
     /// <param name="nic">EV owner NIC</param>
     /// <returns>True if authorized, false otherwise</returns>
     private bool IsAuthorizedForEVOwner(string nic)

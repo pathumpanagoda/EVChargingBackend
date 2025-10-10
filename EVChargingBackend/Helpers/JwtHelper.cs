@@ -11,9 +11,9 @@ using System.Text;
 
 namespace EVChargingBackend.Helpers;
 
-/// <summary>
+
 /// Helper class for JWT token operations
-/// </summary>
+
 public class JwtHelper
 {
     private readonly string _issuer;
@@ -21,9 +21,9 @@ public class JwtHelper
     private readonly string _key;
     private readonly int _expirationMinutes;
 
-    /// <summary>
+    
     /// Initializes a new instance of the JwtHelper
-    /// </summary>
+    
     /// <param name="issuer">JWT issuer</param>
     /// <param name="audience">JWT audience</param>
     /// <param name="key">JWT signing key</param>
@@ -36,9 +36,9 @@ public class JwtHelper
         _expirationMinutes = expirationMinutes;
     }
 
-    /// <summary>
+    
     /// Generates a JWT token for a user
-    /// </summary>
+    
     /// <param name="userId">User ID or NIC</param>
     /// <param name="role">User role</param>
     /// <param name="additionalClaims">Additional claims to include</param>
@@ -79,9 +79,9 @@ public class JwtHelper
         return (tokenString, expiresAt);
     }
 
-    /// <summary>
+    
     /// Generates a JWT token for an EV owner
-    /// </summary>
+    
     /// <param name="nic">EV owner NIC</param>
     /// <param name="name">EV owner name</param>
     /// <returns>JWT token and expiration time</returns>
@@ -96,9 +96,9 @@ public class JwtHelper
         return GenerateToken(nic, "EVOwner", additionalClaims);
     }
 
-    /// <summary>
+    
     /// Generates a JWT token for a system user
-    /// </summary>
+    
     /// <param name="userId">User ID</param>
     /// <param name="username">Username</param>
     /// <param name="role">User role</param>
@@ -113,9 +113,9 @@ public class JwtHelper
         return GenerateToken(userId, role, additionalClaims);
     }
 
-    /// <summary>
+    
     /// Validates a JWT token
-    /// </summary>
+    
     /// <param name="token">JWT token to validate</param>
     /// <returns>Claims principal if valid, null otherwise</returns>
     public ClaimsPrincipal? ValidateToken(string token)
@@ -146,9 +146,9 @@ public class JwtHelper
         }
     }
 
-    /// <summary>
+    
     /// Extracts user ID from a JWT token
-    /// </summary>
+    
     /// <param name="token">JWT token</param>
     /// <returns>User ID if found, null otherwise</returns>
     public string? GetUserIdFromToken(string token)
@@ -157,9 +157,9 @@ public class JwtHelper
         return principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     }
 
-    /// <summary>
+    
     /// Extracts role from a JWT token
-    /// </summary>
+    
     /// <param name="token">JWT token</param>
     /// <returns>Role if found, null otherwise</returns>
     public string? GetRoleFromToken(string token)
@@ -168,9 +168,9 @@ public class JwtHelper
         return principal?.FindFirst(ClaimTypes.Role)?.Value;
     }
 
-    /// <summary>
+    
     /// Extracts NIC from a JWT token (for EV owners)
-    /// </summary>
+    
     /// <param name="token">JWT token</param>
     /// <returns>NIC if found, null otherwise</returns>
     public string? GetNICFromToken(string token)

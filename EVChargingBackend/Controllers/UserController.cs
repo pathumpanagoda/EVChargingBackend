@@ -14,9 +14,9 @@ using System.Security.Claims;
 
 namespace EVChargingBackend.Controllers;
 
-/// <summary>
+
 /// Controller for user management operations (Backoffice only)
-/// </summary>
+
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Roles = "Backoffice")]
@@ -25,18 +25,18 @@ public class UserController : ControllerBase
 {
     private readonly UserService _userService;
 
-    /// <summary>
+    
     /// Initializes a new instance of the UserController
-    /// </summary>
+    
     /// <param name="userService">User service</param>
     public UserController(UserService userService)
     {
         _userService = userService;
     }
 
-    /// <summary>
+    
     /// Creates a new system user
-    /// </summary>
+    
     /// <param name="request">User creation request</param>
     /// <returns>Created user</returns>
     [HttpPost]
@@ -70,9 +70,9 @@ public class UserController : ControllerBase
         }
     }
 
-    /// <summary>
+    
     /// Gets a user by ID
-    /// </summary>
+    
     /// <param name="id">User ID</param>
     /// <returns>User if found</returns>
     [HttpGet("{id}")]
@@ -104,9 +104,9 @@ public class UserController : ControllerBase
         });
     }
 
-    /// <summary>
+    
     /// Gets paginated users with optional filtering
-    /// </summary>
+    
     /// <param name="page">Page number</param>
     /// <param name="pageSize">Page size</param>
     /// <param name="search">Search term</param>
@@ -137,9 +137,9 @@ public class UserController : ControllerBase
         });
     }
 
-    /// <summary>
+    
     /// Updates a user
-    /// </summary>
+    
     /// <param name="id">User ID</param>
     /// <param name="request">User update request</param>
     /// <returns>Updated user if found</returns>
@@ -184,9 +184,9 @@ public class UserController : ControllerBase
         }
     }
 
-    /// <summary>
+    
     /// Deletes a user (soft delete)
-    /// </summary>
+    
     /// <param name="id">User ID</param>
     /// <returns>Success status</returns>
     [HttpDelete("{id}")]

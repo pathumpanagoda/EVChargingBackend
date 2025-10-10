@@ -9,16 +9,16 @@ using MongoDB.Driver;
 
 namespace EVChargingBackend.Data;
 
-/// <summary>
+
 /// MongoDB database context for managing database connections and collections
-/// </summary>
+
 public class MongoDbContext
 {
     private readonly IMongoDatabase _database;
 
-    /// <summary>
+    
     /// Initializes a new instance of the MongoDbContext
-    /// </summary>
+    
     /// <param name="connectionString">MongoDB connection string</param>
     /// <param name="databaseName">Database name</param>
     public MongoDbContext(string connectionString, string databaseName)
@@ -27,29 +27,29 @@ public class MongoDbContext
         _database = client.GetDatabase(databaseName);
     }
 
-    /// <summary>
+    
     /// Gets the Users collection
-    /// </summary>
+    
     public IMongoCollection<User> Users => _database.GetCollection<User>("users");
 
-    /// <summary>
+    
     /// Gets the EVOwners collection
-    /// </summary>
+    
     public IMongoCollection<EVOwner> EVOwners => _database.GetCollection<EVOwner>("evowners");
 
-    /// <summary>
+    
     /// Gets the ChargingStations collection
-    /// </summary>
+    
     public IMongoCollection<ChargingStation> ChargingStations => _database.GetCollection<ChargingStation>("chargingstations");
 
-    /// <summary>
+    
     /// Gets the Bookings collection
-    /// </summary>
+    
     public IMongoCollection<Booking> Bookings => _database.GetCollection<Booking>("bookings");
 
-    /// <summary>
+    
     /// Creates all required indexes for the collections
-    /// </summary>
+    
     public async Task CreateIndexesAsync()
     {
         try
@@ -110,9 +110,9 @@ public class MongoDbContext
         }
     }
 
-    /// <summary>
+    
     /// Ensures a collection exists by creating it if it doesn't
-    /// </summary>
+    
     /// <param name="collectionName">Name of the collection</param>
     private async Task EnsureCollectionExistsAsync(string collectionName)
     {
@@ -132,9 +132,9 @@ public class MongoDbContext
         }
     }
 
-    /// <summary>
+    
     /// Creates an index if it doesn't already exist
-    /// </summary>
+    
     /// <typeparam name="T">Document type</typeparam>
     /// <param name="collection">MongoDB collection</param>
     /// <param name="keys">Index keys</param>

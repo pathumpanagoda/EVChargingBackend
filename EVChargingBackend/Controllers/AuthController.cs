@@ -11,9 +11,9 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace EVChargingBackend.Controllers;
 
-/// <summary>
+
 /// Controller for authentication operations
-/// </summary>
+
 [ApiController]
 [Route("api/[controller]")]
 [SwaggerTag("Authentication endpoints for user login, registration, and token management")]
@@ -21,18 +21,18 @@ public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
 
-    /// <summary>
+    
     /// Initializes a new instance of the AuthController
-    /// </summary>
+    
     /// <param name="authService">Authentication service</param>
     public AuthController(AuthService authService)
     {
         _authService = authService;
     }
 
-    /// <summary>
+    
     /// Authenticates a user and returns a JWT token
-    /// </summary>
+    
     /// <param name="request">Login credentials</param>
     /// <returns>Authentication response with JWT token</returns>
     [HttpPost("login")]
@@ -65,9 +65,9 @@ public class AuthController : ControllerBase
         }
     }
 
-    /// <summary>
+    
     /// Registers a new EV owner
-    /// </summary>
+    
     /// <param name="request">Registration information</param>
     /// <returns>Authentication response with JWT token</returns>
     [HttpPost("register")]
@@ -99,9 +99,9 @@ public class AuthController : ControllerBase
         }
     }
 
-    /// <summary>
+    
     /// Refreshes a JWT token
-    /// </summary>
+    
     /// <param name="request">Token refresh request</param>
     /// <returns>New authentication response with refreshed token</returns>
     [HttpPost("refresh")]
@@ -134,13 +134,13 @@ public class AuthController : ControllerBase
     }
 }
 
-/// <summary>
+
 /// Token refresh request DTO
-/// </summary>
+
 public record TokenRefreshRequest
 {
-    /// <summary>
+    
     /// Current JWT token
-    /// </summary>
+    
     public string Token { get; init; } = string.Empty;
 }

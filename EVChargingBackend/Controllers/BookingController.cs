@@ -14,9 +14,9 @@ using System.Security.Claims;
 
 namespace EVChargingBackend.Controllers;
 
-/// <summary>
+
 /// Controller for booking management operations
-/// </summary>
+
 [ApiController]
 [Route("api/[controller]")]
 [SwaggerTag("Booking management endpoints for charging station reservations")]
@@ -24,18 +24,18 @@ public class BookingController : ControllerBase
 {
     private readonly BookingService _bookingService;
 
-    /// <summary>
+    
     /// Initializes a new instance of the BookingController
-    /// </summary>
+    
     /// <param name="bookingService">Booking service</param>
     public BookingController(BookingService bookingService)
     {
         _bookingService = bookingService;
     }
 
-    /// <summary>
+    
     /// Creates a new booking
-    /// </summary>
+    
     /// <param name="request">Booking creation request</param>
     /// <returns>Created booking</returns>
     [HttpPost]
@@ -82,9 +82,9 @@ public class BookingController : ControllerBase
         }
     }
 
-    /// <summary>
+    
     /// Gets a booking by ID
-    /// </summary>
+    
     /// <param name="id">Booking ID</param>
     /// <returns>Booking if found and authorized</returns>
     [HttpGet("{id}")]
@@ -123,9 +123,9 @@ public class BookingController : ControllerBase
         });
     }
 
-    /// <summary>
+    
     /// Gets bookings for an EV owner
-    /// </summary>
+    
     /// <param name="nic">EV owner NIC</param>
     /// <param name="includeHistory">Include historical bookings</param>
     /// <returns>Collection of bookings for the EV owner</returns>
@@ -155,9 +155,9 @@ public class BookingController : ControllerBase
         });
     }
 
-    /// <summary>
+    
     /// Gets dashboard statistics for an EV owner
-    /// </summary>
+    
     /// <param name="nic">EV owner NIC</param>
     /// <returns>Dashboard statistics</returns>
     [HttpGet("dashboard/{nic}")]
@@ -186,9 +186,9 @@ public class BookingController : ControllerBase
         });
     }
 
-    /// <summary>
+    
     /// Updates a booking
-    /// </summary>
+    
     /// <param name="id">Booking ID</param>
     /// <param name="request">Booking update request</param>
     /// <returns>Updated booking if found and authorized</returns>
@@ -247,9 +247,9 @@ public class BookingController : ControllerBase
         }
     }
 
-    /// <summary>
+    
     /// Cancels a booking
-    /// </summary>
+    
     /// <param name="id">Booking ID</param>
     /// <returns>Success status</returns>
     [HttpDelete("{id}")]
@@ -294,9 +294,9 @@ public class BookingController : ControllerBase
         }
     }
 
-    /// <summary>
+    
     /// Approves a booking (Backoffice/Operator only)
-    /// </summary>
+    
     /// <param name="id">Booking ID</param>
     /// <returns>Updated booking if found</returns>
     [HttpPost("{id}/approve")]
@@ -352,9 +352,9 @@ public class BookingController : ControllerBase
         }
     }
 
-    /// <summary>
+    
     /// Completes a booking via QR scan
-    /// </summary>
+    
     /// <param name="request">Booking complete request with QR payload</param>
     /// <returns>Updated booking if found and valid</returns>
     [HttpPost("complete")]
@@ -399,9 +399,9 @@ public class BookingController : ControllerBase
         }
     }
 
-    /// <summary>
+    
     /// Gets paginated bookings with optional filtering
-    /// </summary>
+    
     /// <param name="page">Page number</param>
     /// <param name="pageSize">Page size</param>
     /// <param name="evOwnerNIC">Optional EV owner NIC filter</param>
@@ -433,9 +433,9 @@ public class BookingController : ControllerBase
         });
     }
 
-    /// <summary>
+    
     /// Gets the EV owner NIC from the current user's claims
-    /// </summary>
+    
     /// <returns>EV owner NIC</returns>
     private string GetEVOwnerNIC()
     {
@@ -447,9 +447,9 @@ public class BookingController : ControllerBase
         return nic;
     }
 
-    /// <summary>
+    
     /// Checks if the current user is authorized to access booking data
-    /// </summary>
+    
     /// <param name="booking">Booking entity</param>
     /// <returns>True if authorized, false otherwise</returns>
     private bool IsAuthorizedForBooking(Booking booking)
@@ -472,9 +472,9 @@ public class BookingController : ControllerBase
         return false;
     }
 
-    /// <summary>
+    
     /// Checks if the current user is authorized to access EV owner data
-    /// </summary>
+    
     /// <param name="nic">EV owner NIC</param>
     /// <returns>True if authorized, false otherwise</returns>
     private bool IsAuthorizedForEVOwner(string nic)

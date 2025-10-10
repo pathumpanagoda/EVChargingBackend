@@ -9,12 +9,12 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace EVChargingBackend.Helpers;
 
-/// <summary>
+
 /// Document filter to ensure OpenAPI version is properly set
 /// </summary>
 public class OpenApiVersionFilter : IDocumentFilter
 {
-    /// <summary>
+    
     /// Applies the document filter to ensure OpenAPI version is set
     /// </summary>
     /// <param name="swaggerDoc">The OpenAPI document</param>
