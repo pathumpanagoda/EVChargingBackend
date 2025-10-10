@@ -112,7 +112,7 @@ public class ChargingStationController : ControllerBase
     [HttpGet]
     [SwaggerOperation(
         Summary = "List Charging Stations",
-        Description = "Gets paginated list of active charging stations with optional filtering"
+        Description = "Gets paginated list of all charging stations (active and inactive) with optional filtering"
     )]
     [SwaggerResponse(200, "Charging stations retrieved successfully", typeof(ApiResponse<PaginatedResponse<ChargingStation>>))]
     public async Task<ActionResult<ApiResponse<PaginatedResponse<ChargingStation>>>> GetStations(
@@ -305,6 +305,51 @@ public class ChargingStationController : ControllerBase
         catch (InvalidOperationException ex)
         {
             return Conflict(new ApiResponse<object>
+            {
+                Success = false,
+                Message = ex.Message
+            });
+        }
+    }
+
+    /// <summary>
+    /// Activates a charging station
+    /// </summary>
+    /// <param name="id">Station ID</param>
+    /// <returns>Success status</returns>
+    [HttpPost("{id}/activate")]
+    [Authorize(Roles = "Backoffice")]
+    [SwaggerOperation(
+        Summary = "Activate Charging Station",
+        Description = "Activates a charging station (Backoffice access required)"
+    )]
+    [SwaggerResponse(200, "Charging station activated successfully", typeof(ApiResponse<object>))]
+    [SwaggerResponse(404, "Charging station not found", typeof(ApiResponse<object>))]
+    [SwaggerResponse(401, "Unauthorized", typeof(ApiResponse<object>))]
+    [SwaggerResponse(403, "Forbidden - Backoffice access required", typeof(ApiResponse<object>))]
+    public async Task<ActionResult<ApiResponse<object>>> ActivateStation(string id)
+    {
+        try
+        {
+            var result = await _stationService.ActivateStationAsync(id);
+            if (!result)
+            {
+                return NotFound(new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "Charging station not found"
+                });
+            }
+
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Message = "Charging station activated successfully"
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new ApiResponse<object>
             {
                 Success = false,
                 Message = ex.Message

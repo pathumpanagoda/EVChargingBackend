@@ -97,7 +97,8 @@ public class ChargingStationService
     /// <returns>Paginated charging stations</returns>
     public async Task<PaginatedResponse<ChargingStation>> GetStationsAsync(int page, int pageSize, string? type = null)
     {
-        var (stations, totalCount) = await _stationRepository.GetPaginatedAsync(page, pageSize, type, true);
+        // Show all stations (both active and inactive) - pass null for isActive to include all
+        var (stations, totalCount) = await _stationRepository.GetPaginatedAsync(page, pageSize, type, null);
 
         return new PaginatedResponse<ChargingStation>
         {
@@ -213,6 +214,24 @@ public class ChargingStationService
         }
 
         station.IsActive = false;
+        await _stationRepository.UpdateAsync(id, station);
+        return true;
+    }
+
+    /// <summary>
+    /// Activates a charging station
+    /// </summary>
+    /// <param name="id">Station ID</param>
+    /// <returns>True if activated, false if not found</returns>
+    public async Task<bool> ActivateStationAsync(string id)
+    {
+        var station = await _stationRepository.GetByIdAsync(id);
+        if (station == null)
+        {
+            return false;
+        }
+
+        station.IsActive = true;
         await _stationRepository.UpdateAsync(id, station);
         return true;
     }
