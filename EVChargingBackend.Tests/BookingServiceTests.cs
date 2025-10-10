@@ -15,9 +15,9 @@ using Moq;
 
 namespace EVChargingBackend.Tests;
 
-/// <summary>
+
 /// Unit tests for BookingService
-/// </summary>
+
 public class BookingServiceTests
 {
     private readonly Mock<BookingRepository> _mockBookingRepository;

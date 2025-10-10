@@ -9,14 +9,14 @@ using FluentValidation;
 
 namespace EVChargingBackend.Validators;
 
-/// <summary>
+
 /// Validator for Charging Station creation/update requests
-/// </summary>
+
 public class ChargingStationRequestValidator : AbstractValidator<ChargingStationRequest>
 {
-    /// <summary>
+    
     /// Initializes a new instance of the ChargingStationRequestValidator
-    /// </summary>
+    
     public ChargingStationRequestValidator()
     {
         RuleFor(x => x.Name)
@@ -49,14 +49,14 @@ public class ChargingStationRequestValidator : AbstractValidator<ChargingStation
     }
 }
 
-/// <summary>
+
 /// Validator for Charging Station schedule update requests
-/// </summary>
+
 public class StationScheduleRequestValidator : AbstractValidator<StationScheduleRequest>
 {
-    /// <summary>
+    
     /// Initializes a new instance of the StationScheduleRequestValidator
-    /// </summary>
+    
     public StationScheduleRequestValidator()
     {
         RuleFor(x => x.Schedule)
@@ -68,14 +68,14 @@ public class StationScheduleRequestValidator : AbstractValidator<StationSchedule
     }
 }
 
-/// <summary>
+
 /// Validator for daily schedule entries
-/// </summary>
+
 public class DailyScheduleValidator : AbstractValidator<DailyScheduleRequest>
 {
-    /// <summary>
+    
     /// Initializes a new instance of the DailyScheduleValidator
-    /// </summary>
+    
     public DailyScheduleValidator()
     {
         RuleFor(x => x.Date)
@@ -95,91 +95,91 @@ public class DailyScheduleValidator : AbstractValidator<DailyScheduleRequest>
     }
 }
 
-/// <summary>
+
 /// Charging Station request DTO
-/// </summary>
+
 public record ChargingStationRequest
 {
-    /// <summary>
+    
     /// Name of the charging station
-    /// </summary>
+    
     public string Name { get; init; } = string.Empty;
 
-    /// <summary>
+    
     /// Location of the charging station
-    /// </summary>
+    
     public LocationRequest Location { get; init; } = new();
 
-    /// <summary>
+    
     /// Type of charging station (AC/DC)
-    /// </summary>
+    
     public string Type { get; init; } = string.Empty;
 
-    /// <summary>
+    
     /// Total number of charging slots
-    /// </summary>
+    
     public int TotalSlots { get; init; }
 
-    /// <summary>
+    
     /// ID of the operator managing this station
-    /// </summary>
+    
     public string OperatorId { get; init; } = string.Empty;
 }
 
-/// <summary>
+
 /// Location request DTO
-/// </summary>
+
 public record LocationRequest
 {
-    /// <summary>
+    
     /// Latitude coordinate
-    /// </summary>
+    
     public double Latitude { get; init; }
 
-    /// <summary>
+    
     /// Longitude coordinate
-    /// </summary>
+    
     public double Longitude { get; init; }
 
-    /// <summary>
+    
     /// Human-readable address
-    /// </summary>
+    
     public string Address { get; init; } = string.Empty;
 }
 
-/// <summary>
+
 /// Station schedule request DTO
-/// </summary>
+
 public record StationScheduleRequest
 {
-    /// <summary>
+    
     /// Daily schedule entries
-    /// </summary>
+    
     public List<DailyScheduleRequest> Schedule { get; init; } = new();
 }
 
-/// <summary>
+
 /// Daily schedule request DTO
-/// </summary>
+
 public record DailyScheduleRequest
 {
-    /// <summary>
+    
     /// Date for this schedule entry
-    /// </summary>
+    
     public DateTime Date { get; init; }
 
-    /// <summary>
+    
     /// Opening time
-    /// </summary>
+    
     public TimeSpan Open { get; init; }
 
-    /// <summary>
+    
     /// Closing time
-    /// </summary>
+    
     public TimeSpan Close { get; init; }
 
-    /// <summary>
+    
     /// Number of slots available
-    /// </summary>
+    
     public int SlotsAvailable { get; init; }
 }

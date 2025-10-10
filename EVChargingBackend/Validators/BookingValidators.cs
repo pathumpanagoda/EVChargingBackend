@@ -9,14 +9,14 @@ using FluentValidation;
 
 namespace EVChargingBackend.Validators;
 
-/// <summary>
+
 /// Validator for BookingRequest DTO
-/// </summary>
+
 public class BookingRequestValidator : AbstractValidator<BookingRequest>
 {
-    /// <summary>
+    
     /// Initializes a new instance of the BookingRequestValidator
-    /// </summary>
+    
     public BookingRequestValidator()
     {
         RuleFor(x => x.StationId)
@@ -28,9 +28,9 @@ public class BookingRequestValidator : AbstractValidator<BookingRequest>
             .Must(BeWithinSevenDays).WithMessage("Reservation must be within 7 days from booking date");
     }
 
-    /// <summary>
+    
     /// Validates that the reservation date is within 7 days
-    /// </summary>
+    
     /// <param name="reservationDateTime">Reservation date and time</param>
     /// <returns>True if within 7 days, false otherwise</returns>
     private static bool BeWithinSevenDays(DateTime reservationDateTime)
@@ -40,14 +40,14 @@ public class BookingRequestValidator : AbstractValidator<BookingRequest>
     }
 }
 
-/// <summary>
+
 /// Validator for BookingUpdateRequest DTO
-/// </summary>
+
 public class BookingUpdateRequestValidator : AbstractValidator<BookingUpdateRequest>
 {
-    /// <summary>
+    
     /// Initializes a new instance of the BookingUpdateRequestValidator
-    /// </summary>
+    
     public BookingUpdateRequestValidator()
     {
         RuleFor(x => x.ReservationDateTime)
@@ -56,9 +56,9 @@ public class BookingUpdateRequestValidator : AbstractValidator<BookingUpdateRequ
             .Must(BeWithinSevenDays).WithMessage("Reservation must be within 7 days from booking date");
     }
 
-    /// <summary>
+    
     /// Validates that the reservation date is within 7 days
-    /// </summary>
+    
     /// <param name="reservationDateTime">Reservation date and time</param>
     /// <returns>True if within 7 days, false otherwise</returns>
     private static bool BeWithinSevenDays(DateTime reservationDateTime)
@@ -68,14 +68,14 @@ public class BookingUpdateRequestValidator : AbstractValidator<BookingUpdateRequ
     }
 }
 
-/// <summary>
+
 /// Validator for BookingCompleteRequest DTO
-/// </summary>
+
 public class BookingCompleteRequestValidator : AbstractValidator<BookingCompleteRequest>
 {
-    /// <summary>
+    
     /// Initializes a new instance of the BookingCompleteRequestValidator
-    /// </summary>
+    
     public BookingCompleteRequestValidator()
     {
         RuleFor(x => x.QRPayload)
@@ -83,9 +83,9 @@ public class BookingCompleteRequestValidator : AbstractValidator<BookingComplete
             .Must(BeValidQRPayload).WithMessage("Invalid QR payload format");
     }
 
-    /// <summary>
+    
     /// Validates that the QR payload has the correct format
-    /// </summary>
+    
     /// <param name="qrPayload">QR payload string</param>
     /// <returns>True if valid format, false otherwise</returns>
     private static bool BeValidQRPayload(string qrPayload)

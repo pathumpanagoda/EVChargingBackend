@@ -9,14 +9,14 @@ using FluentValidation;
 
 namespace EVChargingBackend.Validators;
 
-/// <summary>
+
 /// Validator for EV Owner creation/update requests
-/// </summary>
+
 public class EVOwnerRequestValidator : AbstractValidator<EVOwnerRequest>
 {
-    /// <summary>
+    
     /// Initializes a new instance of the EVOwnerRequestValidator
-    /// </summary>
+    
     public EVOwnerRequestValidator()
     {
         RuleFor(x => x.NIC)
@@ -48,33 +48,33 @@ public class EVOwnerRequestValidator : AbstractValidator<EVOwnerRequest>
     }
 }
 
-/// <summary>
+
 /// EV Owner request DTO for creation and updates
-/// </summary>
+
 public record EVOwnerRequest
 {
-    /// <summary>
+    
     /// National Identity Card number
-    /// </summary>
+    
     public string NIC { get; init; } = string.Empty;
 
-    /// <summary>
+    
     /// Full name of the EV owner
-    /// </summary>
+    
     public string Name { get; init; } = string.Empty;
 
-    /// <summary>
+    
     /// Email address
-    /// </summary>
+    
     public string Email { get; init; } = string.Empty;
 
-    /// <summary>
+    
     /// Phone number
-    /// </summary>
+    
     public string Phone { get; init; } = string.Empty;
 
-    /// <summary>
+    
     /// Password (optional for updates)
-    /// </summary>
+    
     public string? Password { get; init; }
 }

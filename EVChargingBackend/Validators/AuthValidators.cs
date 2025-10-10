@@ -9,14 +9,14 @@ using FluentValidation;
 
 namespace EVChargingBackend.Validators;
 
-/// <summary>
+
 /// Validator for LoginRequest DTO
-/// </summary>
+
 public class LoginRequestValidator : AbstractValidator<LoginRequest>
 {
-    /// <summary>
+    
     /// Initializes a new instance of the LoginRequestValidator
-    /// </summary>
+    
     public LoginRequestValidator()
     {
         RuleFor(x => x.Username)
@@ -29,14 +29,14 @@ public class LoginRequestValidator : AbstractValidator<LoginRequest>
     }
 }
 
-/// <summary>
+
 /// Validator for RegisterRequest DTO
-/// </summary>
+
 public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
 {
-    /// <summary>
+    
     /// Initializes a new instance of the RegisterRequestValidator
-    /// </summary>
+    
     public RegisterRequestValidator()
     {
         RuleFor(x => x.NIC)
