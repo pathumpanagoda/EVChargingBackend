@@ -151,19 +151,7 @@ public class MongoDbContext
                 index.TryGetElement("name", out var nameElement) && 
                 nameElement.Value.AsString == options.Name);
 
-            // Also check if there's an index with the same key pattern but different name
-            var keyExists = indexList.Any(index => 
-            {
-                if (index.TryGetElement("key", out var keyElement))
-                {
-                    var keyDoc = keyElement.Value.AsBsonDocument;
-                    // Compare key patterns (simplified comparison)
-                    return keyDoc.ElementCount == keys.Render(collection.DocumentSerializer, collection.Settings.SerializerRegistry).ElementCount;
-                }
-                return false;
-            });
-
-            if (!indexExists && !keyExists)
+            if (!indexExists)
             {
                 await collection.Indexes.CreateOneAsync(
                     new CreateIndexModel<T>(keys, options)
@@ -172,8 +160,12 @@ public class MongoDbContext
             }
             else
             {
-                Console.WriteLine($"Index already exists or similar key pattern found: {options.Name}");
+                Console.WriteLine($"Index already exists: {options.Name}");
             }
+        }
+        catch (MongoCommandException ex) when (ex.CodeName == "IndexKeySpecsConflict" || ex.CodeName == "IndexOptionsConflict")
+        {
+            Console.WriteLine($"Index already exists or similar key pattern found: {options.Name}");
         }
         catch (Exception ex)
         {

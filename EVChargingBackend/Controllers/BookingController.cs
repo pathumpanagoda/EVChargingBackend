@@ -47,6 +47,7 @@ public class BookingController : ControllerBase
     [SwaggerResponse(201, "Booking created successfully", typeof(ApiResponse<Booking>))]
     [SwaggerResponse(400, "Validation error or business rule violation", typeof(ApiResponse<object>))]
     [SwaggerResponse(401, "Unauthorized", typeof(ApiResponse<object>))]
+    [SwaggerResponse(409, "No slots available", typeof(ApiResponse<object>))]
     [SwaggerResponse(422, "Business rule violation (7-day rule, slot availability)", typeof(ApiResponse<object>))]
     public async Task<ActionResult<ApiResponse<Booking>>> CreateBooking([FromBody] BookingRequest request)
     {
@@ -63,6 +64,16 @@ public class BookingController : ControllerBase
         }
         catch (Exception ex)
         {
+            // Check if it's a slot availability issue
+            if (ex.Message == "No slots available")
+            {
+                return Conflict(new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+            
             return BadRequest(new ApiResponse<object>
             {
                 Success = false,
@@ -192,6 +203,7 @@ public class BookingController : ControllerBase
     [SwaggerResponse(404, "Booking not found", typeof(ApiResponse<object>))]
     [SwaggerResponse(401, "Unauthorized", typeof(ApiResponse<object>))]
     [SwaggerResponse(403, "Forbidden - insufficient permissions", typeof(ApiResponse<object>))]
+    [SwaggerResponse(409, "No slots available", typeof(ApiResponse<object>))]
     [SwaggerResponse(422, "Business rule violation (12-hour rule, 7-day rule, slot availability)", typeof(ApiResponse<object>))]
     public async Task<ActionResult<ApiResponse<Booking>>> UpdateBooking(string id, [FromBody] BookingUpdateRequest request)
     {
@@ -217,6 +229,16 @@ public class BookingController : ControllerBase
         }
         catch (Exception ex)
         {
+            // Check if it's a slot availability issue
+            if (ex.Message == "No slots available")
+            {
+                return Conflict(new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+            
             return BadRequest(new ApiResponse<object>
             {
                 Success = false,
@@ -288,6 +310,7 @@ public class BookingController : ControllerBase
     [SwaggerResponse(400, "Booking cannot be approved", typeof(ApiResponse<object>))]
     [SwaggerResponse(401, "Unauthorized", typeof(ApiResponse<object>))]
     [SwaggerResponse(403, "Forbidden - insufficient permissions", typeof(ApiResponse<object>))]
+    [SwaggerResponse(409, "No slots available", typeof(ApiResponse<object>))]
     public async Task<ActionResult<ApiResponse<Booking>>> ApproveBooking(string id)
     {
         try
@@ -311,6 +334,16 @@ public class BookingController : ControllerBase
         }
         catch (Exception ex)
         {
+            // Check if it's a slot availability issue
+            if (ex.Message == "No slots available")
+            {
+                return Conflict(new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+            
             return BadRequest(new ApiResponse<object>
             {
                 Success = false,

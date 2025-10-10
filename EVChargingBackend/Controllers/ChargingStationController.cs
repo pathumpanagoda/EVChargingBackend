@@ -34,20 +34,20 @@ public class ChargingStationController : ControllerBase
     }
 
     /// <summary>
-    /// Creates a new charging station (Backoffice only)
+    /// Creates a new charging station (Backoffice or StationOperator)
     /// </summary>
     /// <param name="request">Station creation request</param>
     /// <returns>Created charging station</returns>
     [HttpPost]
-    [Authorize(Roles = "Backoffice")]
+    [Authorize(Roles = "Backoffice,StationOperator")]
     [SwaggerOperation(
         Summary = "Create Charging Station",
-        Description = "Creates a new charging station (Backoffice access required)"
+        Description = "Creates a new charging station (Backoffice or StationOperator access required)"
     )]
     [SwaggerResponse(201, "Charging station created successfully", typeof(ApiResponse<ChargingStation>))]
     [SwaggerResponse(400, "Validation error", typeof(ApiResponse<object>))]
     [SwaggerResponse(401, "Unauthorized", typeof(ApiResponse<object>))]
-    [SwaggerResponse(403, "Forbidden - Backoffice access required", typeof(ApiResponse<object>))]
+    [SwaggerResponse(403, "Forbidden - Backoffice or StationOperator access required", typeof(ApiResponse<object>))]
     public async Task<ActionResult<ApiResponse<ChargingStation>>> CreateStation([FromBody] ChargingStationRequest request)
     {
         try

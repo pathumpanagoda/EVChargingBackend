@@ -102,9 +102,12 @@ public class BookingService
             request.ReservationDateTime.AddHours(1) // Assuming 1-hour booking slots
         );
 
-        if (overlappingCount >= station.TotalSlots)
+        // Get available slots for the requested date
+        var availableSlots = GetAvailableSlotsForDate(station, request.ReservationDateTime.Date);
+        
+        if (overlappingCount >= availableSlots)
         {
-            throw new InvalidOperationException("No available slots for the requested time");
+            throw new InvalidOperationException("No slots available");
         }
 
         // Create new booking
@@ -209,9 +212,13 @@ public class BookingService
         );
 
         var station = await _stationRepository.GetByIdAsync(booking.StationId);
-        if (station != null && overlappingCount >= station.TotalSlots)
+        if (station != null)
         {
-            throw new InvalidOperationException("No available slots for the requested time");
+            var availableSlots = GetAvailableSlotsForDate(station, request.ReservationDateTime.Date);
+            if (overlappingCount >= availableSlots)
+            {
+                throw new InvalidOperationException("No slots available");
+            }
         }
 
         // Update booking
@@ -272,6 +279,23 @@ public class BookingService
         if (booking.Status != BookingStatus.Pending)
         {
             throw new InvalidOperationException("Only pending bookings can be approved");
+        }
+
+        // Check slot availability before approval
+        var overlappingCount = await _bookingQueries.CountOverlappingApprovedAsync(
+            booking.StationId,
+            booking.ReservationDateTime,
+            booking.ReservationDateTime.AddHours(1)
+        );
+
+        var station = await _stationRepository.GetByIdAsync(booking.StationId);
+        if (station != null)
+        {
+            var availableSlots = GetAvailableSlotsForDate(station, booking.ReservationDateTime.Date);
+            if (overlappingCount >= availableSlots)
+            {
+                throw new InvalidOperationException("No slots available");
+            }
         }
 
         // Generate QR payload
@@ -343,5 +367,25 @@ public class BookingService
             PageSize = pageSize,
             TotalCount = totalCount
         };
+    }
+
+    /// <summary>
+    /// Gets the available slots for a specific date from the station's schedule
+    /// </summary>
+    /// <param name="station">Charging station</param>
+    /// <param name="date">Date to check</param>
+    /// <returns>Number of available slots for the date</returns>
+    private int GetAvailableSlotsForDate(ChargingStation station, DateTime date)
+    {
+        // Look for a specific schedule entry for the date
+        var scheduleEntry = station.Schedule.FirstOrDefault(s => s.Date.Date == date.Date);
+        
+        if (scheduleEntry != null)
+        {
+            return scheduleEntry.SlotsAvailable;
+        }
+        
+        // If no specific schedule found, use the station's total slots as fallback
+        return station.TotalSlots;
     }
 }

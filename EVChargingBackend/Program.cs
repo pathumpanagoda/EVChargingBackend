@@ -165,6 +165,14 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()
               .AllowCredentials();
     });
+    
+    // Development CORS policy - allow all origins
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
 });
 
 var app = builder.Build();
@@ -179,7 +187,14 @@ app.UseSwaggerUI(c =>
 });
 
 // CORS - Must be before HTTPS redirection
-app.UseCors("AllowOrigins");
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("AllowAll");
+}
+else
+{
+    app.UseCors("AllowOrigins");
+}
 
 // Disable HTTPS redirection in development to avoid CORS issues
 if (!app.Environment.IsDevelopment())
