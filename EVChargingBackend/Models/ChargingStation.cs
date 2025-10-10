@@ -1,6 +1,6 @@
 /*
  * Author: EV Charging System
- * Date: 2024-12-19
+ * Date: 2025-09-23
  * Purpose: Charging Station model representing EV charging infrastructure
  */
 

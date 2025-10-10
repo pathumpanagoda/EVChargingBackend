@@ -1,6 +1,6 @@
 /*
  * Author: EV Charging System
- * Date: 2024-12-19
+ * Date: 2025-10-04
  * Purpose: FluentValidation validators for authentication DTOs
  */
 
