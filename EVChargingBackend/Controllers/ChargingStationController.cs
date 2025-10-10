@@ -1,6 +1,6 @@
 /*
  * Author: EV Charging System
- * Date: 2025-10-02
+ * Date: 2024-12-19
  * Purpose: Charging Station management controller
  */
 
@@ -14,9 +14,9 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace EVChargingBackend.Controllers;
 
-
+/// <summary>
 /// Controller for charging station management operations
-
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [SwaggerTag("Charging Station management endpoints")]
@@ -24,18 +24,18 @@ public class ChargingStationController : ControllerBase
 {
     private readonly ChargingStationService _stationService;
 
-    
+    /// <summary>
     /// Initializes a new instance of the ChargingStationController
-    
+    /// </summary>
     /// <param name="stationService">Charging station service</param>
     public ChargingStationController(ChargingStationService stationService)
     {
         _stationService = stationService;
     }
 
-    
+    /// <summary>
     /// Creates a new charging station (Backoffice or StationOperator)
-    
+    /// </summary>
     /// <param name="request">Station creation request</param>
     /// <returns>Created charging station</returns>
     [HttpPost]
@@ -70,9 +70,9 @@ public class ChargingStationController : ControllerBase
         }
     }
 
-    
+    /// <summary>
     /// Gets a charging station by ID
-    
+    /// </summary>
     /// <param name="id">Station ID</param>
     /// <returns>Charging station if found</returns>
     [HttpGet("{id}")]
@@ -102,9 +102,9 @@ public class ChargingStationController : ControllerBase
         });
     }
 
-    
+    /// <summary>
     /// Gets active charging stations with optional filtering
-    
+    /// </summary>
     /// <param name="page">Page number</param>
     /// <param name="pageSize">Page size</param>
     /// <param name="type">Station type filter (AC/DC)</param>
@@ -129,9 +129,9 @@ public class ChargingStationController : ControllerBase
         });
     }
 
-    
+    /// <summary>
     /// Gets nearby charging stations within a specified distance
-    
+    /// </summary>
     /// <param name="latitude">Latitude coordinate</param>
     /// <param name="longitude">Longitude coordinate</param>
     /// <param name="maxDistanceKm">Maximum distance in kilometers</param>
@@ -170,9 +170,9 @@ public class ChargingStationController : ControllerBase
         }
     }
 
-    
+    /// <summary>
     /// Updates a charging station
-    
+    /// </summary>
     /// <param name="id">Station ID</param>
     /// <param name="request">Station update request</param>
     /// <returns>Updated charging station if found</returns>
@@ -218,9 +218,9 @@ public class ChargingStationController : ControllerBase
         }
     }
 
-    
+    /// <summary>
     /// Updates the daily schedule for a charging station
-    
+    /// </summary>
     /// <param name="id">Station ID</param>
     /// <param name="request">Schedule update request</param>
     /// <returns>Updated charging station if found</returns>
@@ -266,9 +266,9 @@ public class ChargingStationController : ControllerBase
         }
     }
 
-    
+    /// <summary>
     /// Deactivates a charging station
-    
+    /// </summary>
     /// <param name="id">Station ID</param>
     /// <returns>Success status</returns>
     [HttpDelete("{id}")]
@@ -312,9 +312,9 @@ public class ChargingStationController : ControllerBase
         }
     }
 
-    
+    /// <summary>
     /// Activates a charging station
-    
+    /// </summary>
     /// <param name="id">Station ID</param>
     /// <returns>Success status</returns>
     [HttpPost("{id}/activate")]
