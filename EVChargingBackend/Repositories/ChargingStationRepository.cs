@@ -12,25 +12,25 @@ using System.Linq.Expressions;
 
 namespace EVChargingBackend.Repositories;
 
-/// <summary>
+
 /// Repository for ChargingStation entity data access operations
-/// </summary>
+
 public class ChargingStationRepository : IRepository<ChargingStation>
 {
     private readonly IMongoCollection<ChargingStation> _collection;
 
-    /// <summary>
+    
     /// Initializes a new instance of the ChargingStationRepository
-    /// </summary>
+    
     /// <param name="context">MongoDB database context</param>
     public ChargingStationRepository(MongoDbContext context)
     {
         _collection = context.ChargingStations;
     }
 
-    /// <summary>
+    
     /// Gets a charging station by ID
-    /// </summary>
+    
     /// <param name="id">Station ID</param>
     /// <returns>Charging station if found, null otherwise</returns>
     public async Task<ChargingStation?> GetByIdAsync(string id)
@@ -38,18 +38,18 @@ public class ChargingStationRepository : IRepository<ChargingStation>
         return await _collection.Find(s => s.Id == id).FirstOrDefaultAsync();
     }
 
-    /// <summary>
+    
     /// Gets all charging stations
-    /// </summary>
+    
     /// <returns>Collection of charging stations</returns>
     public async Task<IEnumerable<ChargingStation>> GetAllAsync()
     {
         return await _collection.Find(_ => true).ToListAsync();
     }
 
-    /// <summary>
+    
     /// Gets charging stations matching the specified filter
-    /// </summary>
+    
     /// <param name="filter">Filter expression</param>
     /// <returns>Collection of matching charging stations</returns>
     public async Task<IEnumerable<ChargingStation>> FindAsync(Expression<Func<ChargingStation, bool>> filter)
@@ -57,9 +57,9 @@ public class ChargingStationRepository : IRepository<ChargingStation>
         return await _collection.Find(filter).ToListAsync();
     }
 
-    /// <summary>
+    
     /// Gets the first charging station matching the specified filter
-    /// </summary>
+    
     /// <param name="filter">Filter expression</param>
     /// <returns>First matching charging station if found, null otherwise</returns>
     public async Task<ChargingStation?> FindOneAsync(Expression<Func<ChargingStation, bool>> filter)
@@ -67,9 +67,9 @@ public class ChargingStationRepository : IRepository<ChargingStation>
         return await _collection.Find(filter).FirstOrDefaultAsync();
     }
 
-    /// <summary>
+    
     /// Counts charging stations matching the specified filter
-    /// </summary>
+    
     /// <param name="filter">Filter expression</param>
     /// <returns>Count of matching charging stations</returns>
     public async Task<long> CountAsync(Expression<Func<ChargingStation, bool>> filter)
@@ -77,9 +77,9 @@ public class ChargingStationRepository : IRepository<ChargingStation>
         return await _collection.CountDocumentsAsync(filter);
     }
 
-    /// <summary>
+    
     /// Creates a new charging station
-    /// </summary>
+    
     /// <param name="entity">Charging station to create</param>
     /// <returns>Created charging station</returns>
     public async Task<ChargingStation> CreateAsync(ChargingStation entity)
@@ -88,9 +88,9 @@ public class ChargingStationRepository : IRepository<ChargingStation>
         return entity;
     }
 
-    /// <summary>
+    
     /// Updates an existing charging station
-    /// </summary>
+    
     /// <param name="id">Station ID</param>
     /// <param name="entity">Updated charging station</param>
     /// <returns>Updated charging station if found, null otherwise</returns>
@@ -100,9 +100,9 @@ public class ChargingStationRepository : IRepository<ChargingStation>
         return result.IsAcknowledged && result.ModifiedCount > 0 ? entity : null;
     }
 
-    /// <summary>
+    
     /// Deletes a charging station by ID
-    /// </summary>
+    
     /// <param name="id">Station ID</param>
     /// <returns>True if deleted, false if not found</returns>
     public async Task<bool> DeleteAsync(string id)
@@ -111,9 +111,9 @@ public class ChargingStationRepository : IRepository<ChargingStation>
         return result.IsAcknowledged && result.DeletedCount > 0;
     }
 
-    /// <summary>
+    
     /// Checks if a charging station exists with the specified filter
-    /// </summary>
+    
     /// <param name="filter">Filter expression</param>
     /// <returns>True if exists, false otherwise</returns>
     public async Task<bool> ExistsAsync(Expression<Func<ChargingStation, bool>> filter)
@@ -121,18 +121,18 @@ public class ChargingStationRepository : IRepository<ChargingStation>
         return await _collection.CountDocumentsAsync(filter) > 0;
     }
 
-    /// <summary>
+    
     /// Gets active charging stations
-    /// </summary>
+    
     /// <returns>Collection of active charging stations</returns>
     public async Task<IEnumerable<ChargingStation>> GetActiveStationsAsync()
     {
         return await _collection.Find(s => s.IsActive).ToListAsync();
     }
 
-    /// <summary>
+    
     /// Gets charging stations by type
-    /// </summary>
+    
     /// <param name="type">Station type (AC/DC)</param>
     /// <returns>Collection of charging stations of the specified type</returns>
     public async Task<IEnumerable<ChargingStation>> GetByTypeAsync(string type)
@@ -140,9 +140,9 @@ public class ChargingStationRepository : IRepository<ChargingStation>
         return await _collection.Find(s => s.Type == type && s.IsActive).ToListAsync();
     }
 
-    /// <summary>
+    
     /// Gets nearby charging stations within a specified distance
-    /// </summary>
+    
     /// <param name="latitude">Latitude coordinate</param>
     /// <param name="longitude">Longitude coordinate</param>
     /// <param name="maxDistanceKm">Maximum distance in kilometers</param>
@@ -162,9 +162,9 @@ public class ChargingStationRepository : IRepository<ChargingStation>
             .ToListAsync();
     }
 
-    /// <summary>
+    
     /// Gets paginated charging stations
-    /// </summary>
+    
     /// <param name="page">Page number</param>
     /// <param name="pageSize">Page size</param>
     /// <param name="type">Optional station type filter</param>
