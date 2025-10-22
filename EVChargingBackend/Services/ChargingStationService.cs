@@ -56,9 +56,13 @@ public class ChargingStationService
             throw new ValidationException(validationResult.Errors);
         }
 
+        // Generate next available custom ID
+        var customId = await _stationRepository.GetNextCustomIdAsync();
+
         // Create new charging station
         var station = new ChargingStation
         {
+            CustomId = customId,
             Name = request.Name,
             Location = new Location
             {
@@ -143,7 +147,8 @@ public class ChargingStationService
             throw new ValidationException(validationResult.Errors);
         }
 
-        // Update fields
+        // Custom ID is auto-generated and cannot be changed during updates
+        // Keep the existing CustomId
         station.Name = request.Name;
         station.Location = new Location
         {

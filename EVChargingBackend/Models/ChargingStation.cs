@@ -23,6 +23,14 @@ public class ChargingStation
     public string Id { get; set; } = string.Empty;
 
     
+    /// Custom identifier for the charging station (e.g., CS001)
+    
+    [BsonElement("custom_id")]
+    [Required]
+    [StringLength(10, MinimumLength = 3)]
+    public string CustomId { get; set; } = string.Empty;
+
+    
     /// Name of the charging station
     
     [BsonElement("name")]

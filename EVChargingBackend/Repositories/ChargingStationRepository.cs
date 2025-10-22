@@ -39,6 +39,16 @@ public class ChargingStationRepository : IRepository<ChargingStation>
     }
 
     
+    /// Gets a charging station by custom ID
+    
+    /// <param name="customId">Station custom ID (e.g., CS001)</param>
+    /// <returns>Charging station if found, null otherwise</returns>
+    public async Task<ChargingStation?> GetByCustomIdAsync(string customId)
+    {
+        return await _collection.Find(s => s.CustomId == customId).FirstOrDefaultAsync();
+    }
+
+    
     /// Gets all charging stations
     
     /// <returns>Collection of charging stations</returns>
@@ -119,6 +129,53 @@ public class ChargingStationRepository : IRepository<ChargingStation>
     public async Task<bool> ExistsAsync(Expression<Func<ChargingStation, bool>> filter)
     {
         return await _collection.CountDocumentsAsync(filter) > 0;
+    }
+
+    
+    /// Checks if a custom ID already exists
+    
+    /// <param name="customId">Custom ID to check</param>
+    /// <returns>True if exists, false otherwise</returns>
+    public async Task<bool> CustomIdExistsAsync(string customId)
+    {
+        return await _collection.CountDocumentsAsync(s => s.CustomId == customId) > 0;
+    }
+
+    
+    /// Gets the next available custom ID in the format CS001, CS002, etc.
+    
+    /// <returns>Next available custom ID</returns>
+    public async Task<string> GetNextCustomIdAsync()
+    {
+        // Get all existing custom IDs that match the pattern CS###
+        var existingIds = await _collection
+            .Find(s => s.CustomId.StartsWith("CS") && s.CustomId.Length == 5)
+            .Project(s => s.CustomId)
+            .ToListAsync();
+
+        // Extract numbers from existing IDs
+        var numbers = existingIds
+            .Where(id => id.Length == 5 && id.StartsWith("CS") && id.Substring(2).All(char.IsDigit))
+            .Select(id => int.TryParse(id.Substring(2), out var num) ? num : 0)
+            .Where(num => num > 0)
+            .OrderBy(num => num)
+            .ToList();
+
+        // Find the next available number
+        int nextNumber = 1;
+        foreach (var num in numbers)
+        {
+            if (num == nextNumber)
+            {
+                nextNumber++;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return $"CS{nextNumber:D3}";
     }
 
     
