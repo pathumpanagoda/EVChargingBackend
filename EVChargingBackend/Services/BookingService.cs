@@ -132,7 +132,12 @@ public class BookingService
     /// <returns>Booking if found, null otherwise</returns>
     public async Task<Booking?> GetBookingAsync(string id)
     {
-        return await _bookingRepository.GetByIdAsync(id);
+        var booking = await _bookingRepository.GetByIdAsync(id);
+        if (booking != null)
+        {
+            await PopulateStationNamesAsync(new[] { booking });
+        }
+        return booking;
     }
 
     
@@ -143,7 +148,9 @@ public class BookingService
     /// <returns>Collection of bookings for the EV owner</returns>
     public async Task<IEnumerable<Booking>> GetBookingsByOwnerAsync(string evOwnerNIC, bool includeHistory = true)
     {
-        return await _bookingRepository.GetByEVOwnerAsync(evOwnerNIC, includeHistory);
+        var bookings = await _bookingRepository.GetByEVOwnerAsync(evOwnerNIC, includeHistory);
+        await PopulateStationNamesAsync(bookings);
+        return bookings;
     }
 
     
@@ -225,7 +232,12 @@ public class BookingService
         booking.ReservationDateTime = request.ReservationDateTime;
         booking.UpdatedAt = DateTime.UtcNow;
 
-        return await _bookingRepository.UpdateAsync(id, booking);
+        var updatedBooking = await _bookingRepository.UpdateAsync(id, booking);
+        if (updatedBooking != null)
+        {
+            await PopulateStationNamesAsync(new[] { updatedBooking });
+        }
+        return updatedBooking;
     }
 
     
@@ -304,7 +316,12 @@ public class BookingService
         booking.Status = BookingStatus.Approved;
         booking.UpdatedAt = DateTime.UtcNow;
 
-        return await _bookingRepository.UpdateAsync(id, booking);
+        var updatedBooking = await _bookingRepository.UpdateAsync(id, booking);
+        if (updatedBooking != null)
+        {
+            await PopulateStationNamesAsync(new[] { updatedBooking });
+        }
+        return updatedBooking;
     }
 
     
@@ -344,7 +361,12 @@ public class BookingService
         booking.Status = BookingStatus.Completed;
         booking.UpdatedAt = DateTime.UtcNow;
 
-        return await _bookingRepository.UpdateAsync(bookingInfo.BookingId, booking);
+        var completedBooking = await _bookingRepository.UpdateAsync(bookingInfo.BookingId, booking);
+        if (completedBooking != null)
+        {
+            await PopulateStationNamesAsync(new[] { completedBooking });
+        }
+        return completedBooking;
     }
 
     
@@ -359,6 +381,46 @@ public class BookingService
     public async Task<PaginatedResponse<Booking>> GetBookingsAsync(int page, int pageSize, string? evOwnerNIC = null, string? stationId = null, string? status = null)
     {
         var (bookings, totalCount) = await _bookingRepository.GetPaginatedAsync(page, pageSize, evOwnerNIC, stationId, status);
+        await PopulateStationNamesAsync(bookings);
+
+        return new PaginatedResponse<Booking>
+        {
+            Items = bookings.ToList(),
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount
+        };
+    }
+
+    
+    /// Gets paginated bookings for a station operator
+    
+    /// <param name="page">Page number</param>
+    /// <param name="pageSize">Page size</param>
+    /// <param name="operatorId">Operator user ID</param>
+    /// <param name="evOwnerNIC">Optional EV owner NIC filter</param>
+    /// <param name="status">Optional status filter</param>
+    /// <returns>Paginated bookings for operator's stations</returns>
+    public async Task<PaginatedResponse<Booking>> GetBookingsForOperatorAsync(int page, int pageSize, string operatorId, string? evOwnerNIC = null, string? status = null)
+    {
+        // Get all stations owned by this operator
+        var stations = await _stationRepository.FindAsync(s => s.OperatorId == operatorId);
+        var stationIds = stations.Select(s => s.Id).ToList();
+
+        // If operator has no stations, return empty result
+        if (!stationIds.Any())
+        {
+            return new PaginatedResponse<Booking>
+            {
+                Items = new List<Booking>(),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = 0
+            };
+        }
+
+        var (bookings, totalCount) = await _bookingRepository.GetPaginatedByStationsAsync(page, pageSize, stationIds, evOwnerNIC, status);
+        await PopulateStationNamesAsync(bookings);
 
         return new PaginatedResponse<Booking>
         {
@@ -387,5 +449,33 @@ public class BookingService
         
         // If no specific schedule found, use the station's total slots as fallback
         return station.TotalSlots;
+    }
+
+    
+    /// Populates station names for a collection of bookings
+    
+    /// <param name="bookings">Collection of bookings to populate</param>
+    private async Task PopulateStationNamesAsync(IEnumerable<Booking> bookings)
+    {
+        if (bookings == null || !bookings.Any())
+        {
+            return;
+        }
+
+        // Get unique station IDs
+        var stationIds = bookings.Select(b => b.StationId).Distinct().ToList();
+        
+        // Fetch all stations in one query
+        var stations = await _stationRepository.FindAsync(s => stationIds.Contains(s.Id));
+        var stationDict = stations.ToDictionary(s => s.Id, s => s.Name);
+
+        // Populate station names
+        foreach (var booking in bookings)
+        {
+            if (stationDict.TryGetValue(booking.StationId, out var stationName))
+            {
+                booking.StationName = stationName;
+            }
+        }
     }
 }

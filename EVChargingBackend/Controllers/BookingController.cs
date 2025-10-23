@@ -23,14 +23,17 @@ namespace EVChargingBackend.Controllers;
 public class BookingController : ControllerBase
 {
     private readonly BookingService _bookingService;
+    private readonly ChargingStationService _stationService;
 
     
     /// Initializes a new instance of the BookingController
     
     /// <param name="bookingService">Booking service</param>
-    public BookingController(BookingService bookingService)
+    /// <param name="stationService">Charging station service</param>
+    public BookingController(BookingService bookingService, ChargingStationService stationService)
     {
         _bookingService = bookingService;
+        _stationService = stationService;
     }
 
     
@@ -91,7 +94,7 @@ public class BookingController : ControllerBase
     [Authorize]
     [SwaggerOperation(
         Summary = "Get Booking",
-        Description = "Gets a booking by ID (owner can access own bookings, Backoffice/Operator can access any)"
+        Description = "Gets a booking by ID (owner can access own bookings, Backoffice can access any, StationOperator can access their stations' bookings)"
     )]
     [SwaggerResponse(200, "Booking found", typeof(ApiResponse<Booking>))]
     [SwaggerResponse(404, "Booking not found", typeof(ApiResponse<object>))]
@@ -110,7 +113,7 @@ public class BookingController : ControllerBase
         }
 
         // Check authorization
-        if (!IsAuthorizedForBooking(booking))
+        if (!await IsAuthorizedForBookingAsync(booking))
         {
             return Forbid();
         }
@@ -303,7 +306,7 @@ public class BookingController : ControllerBase
     [Authorize(Roles = "Backoffice,StationOperator")]
     [SwaggerOperation(
         Summary = "Approve Booking",
-        Description = "Approves a pending booking and generates QR code (Backoffice or StationOperator access required)"
+        Description = "Approves a pending booking and generates QR code (Backoffice can approve any, StationOperator can approve their stations' bookings)"
     )]
     [SwaggerResponse(200, "Booking approved successfully", typeof(ApiResponse<Booking>))]
     [SwaggerResponse(404, "Booking not found", typeof(ApiResponse<object>))]
@@ -315,8 +318,9 @@ public class BookingController : ControllerBase
     {
         try
         {
-            var booking = await _bookingService.ApproveBookingAsync(id);
-            if (booking == null)
+            // Get the booking first to check authorization
+            var existingBooking = await _bookingService.GetBookingAsync(id);
+            if (existingBooking == null)
             {
                 return NotFound(new ApiResponse<object>
                 {
@@ -324,6 +328,14 @@ public class BookingController : ControllerBase
                     Message = "Booking not found"
                 });
             }
+
+            // Check authorization for station operators
+            if (!await IsAuthorizedForBookingAsync(existingBooking))
+            {
+                return Forbid();
+            }
+
+            var booking = await _bookingService.ApproveBookingAsync(id);
 
             return Ok(new ApiResponse<Booking>
             {
@@ -361,7 +373,7 @@ public class BookingController : ControllerBase
     [Authorize(Roles = "Backoffice,StationOperator")]
     [SwaggerOperation(
         Summary = "Complete Booking",
-        Description = "Completes a booking via QR code scan (Backoffice or StationOperator access required)"
+        Description = "Completes a booking via QR code scan (Backoffice can complete any, StationOperator can complete their stations' bookings)"
     )]
     [SwaggerResponse(200, "Booking completed successfully", typeof(ApiResponse<Booking>))]
     [SwaggerResponse(400, "Invalid QR payload or booking cannot be completed", typeof(ApiResponse<object>))]
@@ -380,6 +392,12 @@ public class BookingController : ControllerBase
                     Success = false,
                     Message = "Booking not found"
                 });
+            }
+
+            // Check authorization for station operators
+            if (!await IsAuthorizedForBookingAsync(booking))
+            {
+                return Forbid();
             }
 
             return Ok(new ApiResponse<Booking>
@@ -412,7 +430,7 @@ public class BookingController : ControllerBase
     [Authorize(Roles = "Backoffice,StationOperator")]
     [SwaggerOperation(
         Summary = "List Bookings",
-        Description = "Gets paginated list of bookings with optional filtering (Backoffice or StationOperator access required)"
+        Description = "Gets paginated list of bookings with optional filtering (Backoffice can see all, StationOperator sees only their stations' bookings)"
     )]
     [SwaggerResponse(200, "Bookings retrieved successfully", typeof(ApiResponse<PaginatedResponse<Booking>>))]
     [SwaggerResponse(401, "Unauthorized", typeof(ApiResponse<object>))]
@@ -424,7 +442,21 @@ public class BookingController : ControllerBase
         [FromQuery] string? stationId = null,
         [FromQuery] string? status = null)
     {
-        var bookings = await _bookingService.GetBookingsAsync(page, pageSize, evOwnerNIC, stationId, status);
+        var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+        PaginatedResponse<Booking> bookings;
+
+        // Station operators can only see bookings for their own stations
+        if (userRole == "StationOperator")
+        {
+            var operatorId = GetUserId();
+            bookings = await _bookingService.GetBookingsForOperatorAsync(page, pageSize, operatorId, evOwnerNIC, status);
+        }
+        else
+        {
+            // Backoffice can see all bookings
+            bookings = await _bookingService.GetBookingsAsync(page, pageSize, evOwnerNIC, stationId, status);
+        }
+
         return Ok(new ApiResponse<PaginatedResponse<Booking>>
         {
             Success = true,
@@ -448,19 +480,41 @@ public class BookingController : ControllerBase
     }
 
     
+    /// Gets the user ID from the current user's claims
+    
+    /// <returns>User ID</returns>
+    private string GetUserId()
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            throw new UnauthorizedAccessException("User ID not found in token");
+        }
+        return userId;
+    }
+
+    
     /// Checks if the current user is authorized to access booking data
     
     /// <param name="booking">Booking entity</param>
     /// <returns>True if authorized, false otherwise</returns>
-    private bool IsAuthorizedForBooking(Booking booking)
+    private async Task<bool> IsAuthorizedForBookingAsync(Booking booking)
     {
         var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
         var userNIC = User.FindFirst("nic")?.Value;
 
-        // Backoffice and StationOperator can access any booking
-        if (userRole == "Backoffice" || userRole == "StationOperator")
+        // Backoffice can access any booking
+        if (userRole == "Backoffice")
         {
             return true;
+        }
+
+        // StationOperator can only access bookings for their own stations
+        if (userRole == "StationOperator")
+        {
+            var userId = GetUserId();
+            var station = await _stationService.GetStationAsync(booking.StationId);
+            return station != null && station.OperatorId == userId;
         }
 
         // EV owner can only access their own bookings

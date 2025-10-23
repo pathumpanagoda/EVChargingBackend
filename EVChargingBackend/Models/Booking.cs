@@ -39,6 +39,12 @@ public class Booking
     public string StationId { get; set; } = string.Empty;
 
     
+    /// Name of the charging station (not stored in database, populated on read)
+    
+    [BsonIgnore]
+    public string? StationName { get; set; }
+
+    
     /// Date when the booking was made
     
     [BsonElement("booking_date")]

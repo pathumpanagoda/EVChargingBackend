@@ -226,8 +226,9 @@ public class ChargingStationRepository : IRepository<ChargingStation>
     /// <param name="pageSize">Page size</param>
     /// <param name="type">Optional station type filter</param>
     /// <param name="isActive">Optional active status filter</param>
+    /// <param name="operatorId">Optional operator ID filter</param>
     /// <returns>Paginated charging stations</returns>
-    public async Task<(IEnumerable<ChargingStation> Stations, long TotalCount)> GetPaginatedAsync(int page, int pageSize, string? type = null, bool? isActive = null)
+    public async Task<(IEnumerable<ChargingStation> Stations, long TotalCount)> GetPaginatedAsync(int page, int pageSize, string? type = null, bool? isActive = null, string? operatorId = null)
     {
         var filter = Builders<ChargingStation>.Filter.Empty;
 
@@ -241,6 +242,11 @@ public class ChargingStationRepository : IRepository<ChargingStation>
             filter = Builders<ChargingStation>.Filter.And(filter, Builders<ChargingStation>.Filter.Eq(s => s.IsActive, isActive.Value));
         }
 
+        if (!string.IsNullOrEmpty(operatorId))
+        {
+            filter = Builders<ChargingStation>.Filter.And(filter, Builders<ChargingStation>.Filter.Eq(s => s.OperatorId, operatorId));
+        }
+
         var totalCount = await _collection.CountDocumentsAsync(filter);
         var stations = await _collection
             .Find(filter)
@@ -249,5 +255,15 @@ public class ChargingStationRepository : IRepository<ChargingStation>
             .ToListAsync();
 
         return (stations, totalCount);
+    }
+    
+    
+    /// Gets charging stations by operator ID
+    
+    /// <param name="operatorId">Operator ID</param>
+    /// <returns>Collection of charging stations managed by the operator</returns>
+    public async Task<IEnumerable<ChargingStation>> GetByOperatorIdAsync(string operatorId)
+    {
+        return await _collection.Find(s => s.OperatorId == operatorId).ToListAsync();
     }
 }

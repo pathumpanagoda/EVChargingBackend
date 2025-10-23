@@ -230,4 +230,38 @@ public class BookingRepository : IRepository<Booking>
 
         return (bookings, totalCount);
     }
+
+    
+    /// Gets paginated bookings for multiple stations
+    
+    /// <param name="page">Page number</param>
+    /// <param name="pageSize">Page size</param>
+    /// <param name="stationIds">List of station IDs to filter by</param>
+    /// <param name="evOwnerNIC">Optional EV owner NIC filter</param>
+    /// <param name="status">Optional status filter</param>
+    /// <returns>Paginated bookings</returns>
+    public async Task<(IEnumerable<Booking> Bookings, long TotalCount)> GetPaginatedByStationsAsync(int page, int pageSize, List<string> stationIds, string? evOwnerNIC = null, string? status = null)
+    {
+        var filter = Builders<Booking>.Filter.In(b => b.StationId, stationIds);
+
+        if (!string.IsNullOrEmpty(evOwnerNIC))
+        {
+            filter = Builders<Booking>.Filter.And(filter, Builders<Booking>.Filter.Eq(b => b.EVOwnerNIC, evOwnerNIC));
+        }
+
+        if (!string.IsNullOrEmpty(status))
+        {
+            filter = Builders<Booking>.Filter.And(filter, Builders<Booking>.Filter.Eq(b => b.Status, status));
+        }
+
+        var totalCount = await _collection.CountDocumentsAsync(filter);
+        var bookings = await _collection
+            .Find(filter)
+            .SortByDescending(b => b.ReservationDateTime)
+            .Skip((page - 1) * pageSize)
+            .Limit(pageSize)
+            .ToListAsync();
+
+        return (bookings, totalCount);
+    }
 }

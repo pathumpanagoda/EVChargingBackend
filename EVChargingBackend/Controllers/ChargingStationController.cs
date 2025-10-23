@@ -108,6 +108,7 @@ public class ChargingStationController : ControllerBase
     /// <param name="page">Page number</param>
     /// <param name="pageSize">Page size</param>
     /// <param name="type">Station type filter (AC/DC)</param>
+    /// <param name="operatorId">Operator ID filter</param>
     /// <returns>Paginated charging stations</returns>
     [HttpGet]
     [SwaggerOperation(
@@ -118,9 +119,10 @@ public class ChargingStationController : ControllerBase
     public async Task<ActionResult<ApiResponse<PaginatedResponse<ChargingStation>>>> GetStations(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
-        [FromQuery] string? type = null)
+        [FromQuery] string? type = null,
+        [FromQuery] string? operatorId = null)
     {
-        var stations = await _stationService.GetStationsAsync(page, pageSize, type);
+        var stations = await _stationService.GetStationsAsync(page, pageSize, type, operatorId);
         return Ok(new ApiResponse<PaginatedResponse<ChargingStation>>
         {
             Success = true,

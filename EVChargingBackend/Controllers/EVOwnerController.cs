@@ -271,6 +271,40 @@ public class EVOwnerController : ControllerBase
     }
 
     
+    /// Deletes an EV owner permanently (Backoffice only)
+    
+    /// <param name="nic">NIC</param>
+    /// <returns>Success status</returns>
+    [HttpDelete("{nic}")]
+    [Authorize(Roles = "Backoffice")]
+    [SwaggerOperation(
+        Summary = "Delete EV Owner",
+        Description = "Permanently deletes an EV owner (Backoffice access required)"
+    )]
+    [SwaggerResponse(200, "EV owner deleted successfully", typeof(ApiResponse<object>))]
+    [SwaggerResponse(404, "EV owner not found", typeof(ApiResponse<object>))]
+    [SwaggerResponse(401, "Unauthorized", typeof(ApiResponse<object>))]
+    [SwaggerResponse(403, "Forbidden - Backoffice access required", typeof(ApiResponse<object>))]
+    public async Task<ActionResult<ApiResponse<object>>> DeleteEVOwner(string nic)
+    {
+        var result = await _evOwnerService.DeleteEVOwnerAsync(nic);
+        if (!result)
+        {
+            return NotFound(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "EV owner not found"
+            });
+        }
+
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Message = "EV owner deleted successfully"
+        });
+    }
+
+    
     /// Checks if the current user is authorized to access EV owner data
     
     /// <param name="nic">EV owner NIC</param>

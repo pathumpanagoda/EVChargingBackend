@@ -98,11 +98,12 @@ public class ChargingStationService
     /// <param name="page">Page number</param>
     /// <param name="pageSize">Page size</param>
     /// <param name="type">Station type filter</param>
+    /// <param name="operatorId">Operator ID filter</param>
     /// <returns>Paginated charging stations</returns>
-    public async Task<PaginatedResponse<ChargingStation>> GetStationsAsync(int page, int pageSize, string? type = null)
+    public async Task<PaginatedResponse<ChargingStation>> GetStationsAsync(int page, int pageSize, string? type = null, string? operatorId = null)
     {
         // Show all stations (both active and inactive) - pass null for isActive to include all
-        var (stations, totalCount) = await _stationRepository.GetPaginatedAsync(page, pageSize, type, null);
+        var (stations, totalCount) = await _stationRepository.GetPaginatedAsync(page, pageSize, type, null, operatorId);
 
         return new PaginatedResponse<ChargingStation>
         {
@@ -111,6 +112,16 @@ public class ChargingStationService
             PageSize = pageSize,
             TotalCount = totalCount
         };
+    }
+    
+    /// <summary>
+    /// Gets charging stations by operator ID
+    /// </summary>
+    /// <param name="operatorId">Operator ID</param>
+    /// <returns>Collection of charging stations managed by the operator</returns>
+    public async Task<IEnumerable<ChargingStation>> GetStationsByOperatorAsync(string operatorId)
+    {
+        return await _stationRepository.GetByOperatorIdAsync(operatorId);
     }
 
     /// <summary>

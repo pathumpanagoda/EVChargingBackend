@@ -179,4 +179,14 @@ public class EVOwnerService
         await _evOwnerRepository.UpdateAsync(nic, evOwner);
         return true;
     }
+
+    
+    /// Deletes an EV owner permanently (Backoffice only)
+    
+    /// <param name="nic">NIC</param>
+    /// <returns>True if deleted, false if not found</returns>
+    public async Task<bool> DeleteEVOwnerAsync(string nic)
+    {
+        return await _evOwnerRepository.DeleteAsync(nic);
+    }
 }
