@@ -152,7 +152,43 @@ public class UserService
     }
 
     
-    /// Deletes a user (soft delete by setting inactive)
+    /// Deactivates a user
+    
+    /// <param name="id">User ID</param>
+    /// <returns>True if deactivated, false if not found</returns>
+    public async Task<bool> DeactivateUserAsync(string id)
+    {
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user == null)
+        {
+            return false;
+        }
+
+        user.IsActive = false;
+        await _userRepository.UpdateAsync(id, user);
+        return true;
+    }
+
+    
+    /// Activates a user
+    
+    /// <param name="id">User ID</param>
+    /// <returns>True if activated, false if not found</returns>
+    public async Task<bool> ActivateUserAsync(string id)
+    {
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user == null)
+        {
+            return false;
+        }
+
+        user.IsActive = true;
+        await _userRepository.UpdateAsync(id, user);
+        return true;
+    }
+
+    
+    /// Deletes a user (hard delete - removes from database)
     
     /// <param name="id">User ID</param>
     /// <returns>True if deleted, false if not found</returns>
@@ -164,10 +200,8 @@ public class UserService
             return false;
         }
 
-        // Soft delete by setting inactive
-        user.IsActive = false;
-        await _userRepository.UpdateAsync(id, user);
-        return true;
+        // Hard delete - actually remove from database
+        return await _userRepository.DeleteAsync(id);
     }
 
     

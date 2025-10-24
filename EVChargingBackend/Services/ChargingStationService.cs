@@ -261,4 +261,27 @@ public class ChargingStationService
     {
         return await _stationRepository.GetByTypeAsync(type);
     }
+
+    /// <summary>
+    /// Permanently deletes a charging station
+    /// </summary>
+    /// <param name="id">Station ID</param>
+    /// <returns>True if deleted, false if not found</returns>
+    public async Task<bool> DeleteStationAsync(string id)
+    {
+        var station = await _stationRepository.GetByIdAsync(id);
+        if (station == null)
+        {
+            return false;
+        }
+
+        // Check if station has any bookings (past or future)
+        if (await _bookingQueries.HasActiveFutureBookingsForStationAsync(id, DateTime.UtcNow))
+        {
+            throw new InvalidOperationException("Cannot delete station with active future bookings. Please deactivate it instead.");
+        }
+
+        // Permanently delete the station
+        return await _stationRepository.DeleteAsync(id);
+    }
 }

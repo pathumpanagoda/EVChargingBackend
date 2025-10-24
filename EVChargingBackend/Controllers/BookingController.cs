@@ -303,10 +303,10 @@ public class BookingController : ControllerBase
     /// <param name="id">Booking ID</param>
     /// <returns>Updated booking if found</returns>
     [HttpPost("{id}/approve")]
-    [Authorize(Roles = "Backoffice,StationOperator")]
+    [Authorize(Roles = "StationOperator")]
     [SwaggerOperation(
         Summary = "Approve Booking",
-        Description = "Approves a pending booking and generates QR code (Backoffice can approve any, StationOperator can approve their stations' bookings)"
+        Description = "Approves a pending booking and generates QR code (StationOperator can approve their stations' bookings only)"
     )]
     [SwaggerResponse(200, "Booking approved successfully", typeof(ApiResponse<Booking>))]
     [SwaggerResponse(404, "Booking not found", typeof(ApiResponse<object>))]
@@ -329,8 +329,8 @@ public class BookingController : ControllerBase
                 });
             }
 
-            // Check authorization for station operators
-            if (!await IsAuthorizedForBookingAsync(existingBooking))
+            // Check authorization for booking approval (only StationOperator can approve)
+            if (!await IsAuthorizedForBookingApprovalAsync(existingBooking))
             {
                 return Forbid();
             }
@@ -521,6 +521,26 @@ public class BookingController : ControllerBase
         if (userRole == "EVOwner" && userNIC == booking.EVOwnerNIC)
         {
             return true;
+        }
+
+        return false;
+    }
+
+    
+    /// Checks if the current user is authorized to approve bookings (StationOperator only)
+    
+    /// <param name="booking">Booking entity</param>
+    /// <returns>True if authorized, false otherwise</returns>
+    private async Task<bool> IsAuthorizedForBookingApprovalAsync(Booking booking)
+    {
+        var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        // Only StationOperator can approve bookings
+        if (userRole == "StationOperator")
+        {
+            var userId = GetUserId();
+            var station = await _stationService.GetStationAsync(booking.StationId);
+            return station != null && station.OperatorId == userId;
         }
 
         return false;

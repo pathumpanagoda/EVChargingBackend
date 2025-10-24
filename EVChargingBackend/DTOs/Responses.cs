@@ -58,6 +58,10 @@ public record AuthResponse
     
     public string UserId { get; init; } = string.Empty;
     
+    /// Username or Name for display
+    
+    public string Username { get; init; } = string.Empty;
+    
     /// EV Owner NIC (for EV owners only)
     
     public string? Nic { get; init; }

@@ -34,20 +34,20 @@ public class ChargingStationController : ControllerBase
     }
 
     /// <summary>
-    /// Creates a new charging station (Backoffice or StationOperator)
+    /// Creates a new charging station (StationOperator only)
     /// </summary>
     /// <param name="request">Station creation request</param>
     /// <returns>Created charging station</returns>
     [HttpPost]
-    [Authorize(Roles = "Backoffice,StationOperator")]
+    [Authorize(Roles = "StationOperator")]
     [SwaggerOperation(
         Summary = "Create Charging Station",
-        Description = "Creates a new charging station (Backoffice or StationOperator access required)"
+        Description = "Creates a new charging station (StationOperator access required)"
     )]
     [SwaggerResponse(201, "Charging station created successfully", typeof(ApiResponse<ChargingStation>))]
     [SwaggerResponse(400, "Validation error", typeof(ApiResponse<object>))]
     [SwaggerResponse(401, "Unauthorized", typeof(ApiResponse<object>))]
-    [SwaggerResponse(403, "Forbidden - Backoffice or StationOperator access required", typeof(ApiResponse<object>))]
+    [SwaggerResponse(403, "Forbidden - StationOperator access required", typeof(ApiResponse<object>))]
     public async Task<ActionResult<ApiResponse<ChargingStation>>> CreateStation([FromBody] ChargingStationRequest request)
     {
         try
@@ -221,16 +221,62 @@ public class ChargingStationController : ControllerBase
     }
 
     /// <summary>
+    /// Gets the daily schedule for a charging station (read-only access for Backoffice)
+    /// </summary>
+    /// <param name="id">Station ID</param>
+    /// <returns>Station schedule if found</returns>
+    [HttpGet("{id}/schedule")]
+    [Authorize(Roles = "Backoffice,StationOperator")]
+    [SwaggerOperation(
+        Summary = "Get Station Schedule",
+        Description = "Gets the daily schedule for a charging station (Backoffice and StationOperator access required)"
+    )]
+    [SwaggerResponse(200, "Station schedule retrieved successfully", typeof(ApiResponse<List<DailySchedule>>))]
+    [SwaggerResponse(404, "Charging station not found", typeof(ApiResponse<object>))]
+    [SwaggerResponse(401, "Unauthorized", typeof(ApiResponse<object>))]
+    [SwaggerResponse(403, "Forbidden - insufficient permissions", typeof(ApiResponse<object>))]
+    public async Task<ActionResult<ApiResponse<List<DailySchedule>>>> GetSchedule(string id)
+    {
+        try
+        {
+            var station = await _stationService.GetStationAsync(id);
+            if (station == null)
+            {
+                return NotFound(new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "Charging station not found"
+                });
+            }
+
+            return Ok(new ApiResponse<List<DailySchedule>>
+            {
+                Success = true,
+                Message = "Station schedule retrieved successfully",
+                Data = station.Schedule
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = ex.Message
+            });
+        }
+    }
+
+    /// <summary>
     /// Updates the daily schedule for a charging station
     /// </summary>
     /// <param name="id">Station ID</param>
     /// <param name="request">Schedule update request</param>
     /// <returns>Updated charging station if found</returns>
     [HttpPut("{id}/schedule")]
-    [Authorize(Roles = "Backoffice,StationOperator")]
+    [Authorize(Roles = "StationOperator")]
     [SwaggerOperation(
         Summary = "Update Station Schedule",
-        Description = "Updates the daily schedule for a charging station (Backoffice or StationOperator access required)"
+        Description = "Updates the daily schedule for a charging station (StationOperator access required - only station operators can modify schedules)"
     )]
     [SwaggerResponse(200, "Station schedule updated successfully", typeof(ApiResponse<ChargingStation>))]
     [SwaggerResponse(400, "Validation error", typeof(ApiResponse<object>))]
@@ -273,7 +319,7 @@ public class ChargingStationController : ControllerBase
     /// </summary>
     /// <param name="id">Station ID</param>
     /// <returns>Success status</returns>
-    [HttpDelete("{id}")]
+    [HttpPatch("{id}/deactivate")]
     [Authorize(Roles = "Backoffice")]
     [SwaggerOperation(
         Summary = "Deactivate Charging Station",
@@ -352,6 +398,52 @@ public class ChargingStationController : ControllerBase
         catch (Exception ex)
         {
             return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = ex.Message
+            });
+        }
+    }
+
+    /// <summary>
+    /// Permanently deletes a charging station
+    /// </summary>
+    /// <param name="id">Station ID</param>
+    /// <returns>Success status</returns>
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "Backoffice")]
+    [SwaggerOperation(
+        Summary = "Permanently Delete Charging Station",
+        Description = "Permanently deletes a charging station from the database (Backoffice access required). Cannot delete if active future bookings exist."
+    )]
+    [SwaggerResponse(200, "Charging station deleted successfully", typeof(ApiResponse<object>))]
+    [SwaggerResponse(404, "Charging station not found", typeof(ApiResponse<object>))]
+    [SwaggerResponse(409, "Cannot delete station with active future bookings", typeof(ApiResponse<object>))]
+    [SwaggerResponse(401, "Unauthorized", typeof(ApiResponse<object>))]
+    [SwaggerResponse(403, "Forbidden - Backoffice access required", typeof(ApiResponse<object>))]
+    public async Task<ActionResult<ApiResponse<object>>> DeleteStation(string id)
+    {
+        try
+        {
+            var result = await _stationService.DeleteStationAsync(id);
+            if (!result)
+            {
+                return NotFound(new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "Charging station not found"
+                });
+            }
+
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Message = "Charging station permanently deleted successfully"
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new ApiResponse<object>
             {
                 Success = false,
                 Message = ex.Message

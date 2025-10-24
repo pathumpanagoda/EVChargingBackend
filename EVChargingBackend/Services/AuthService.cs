@@ -126,6 +126,7 @@ public class AuthService
             ExpiresAt = expiresAt,
             Role = "EVOwner",
             UserId = evOwner.NIC,
+            Username = evOwner.Name,
             Nic = evOwner.NIC
         };
     }
@@ -166,7 +167,8 @@ public class AuthService
                 Token = newToken,
                 ExpiresAt = expiresAt,
                 Role = role,
-                UserId = userId
+                UserId = userId,
+                Username = evOwner.Name
             };
         }
         else
@@ -183,7 +185,8 @@ public class AuthService
                 Token = newToken,
                 ExpiresAt = expiresAt,
                 Role = role,
-                UserId = userId
+                UserId = userId,
+                Username = user.Username
             };
         }
     }
@@ -213,7 +216,8 @@ public class AuthService
             Token = token,
             ExpiresAt = expiresAt,
             Role = user.Role,
-            UserId = user.Id
+            UserId = user.Id,
+            Username = user.Username
         };
     }
 
@@ -243,6 +247,7 @@ public class AuthService
             ExpiresAt = expiresAt,
             Role = "EVOwner",
             UserId = evOwner.NIC,
+            Username = evOwner.Name,
             Nic = evOwner.NIC
         };
     }

@@ -185,14 +185,80 @@ public class UserController : ControllerBase
     }
 
     
-    /// Deletes a user (soft delete)
+    /// Deactivates a user
+    
+    /// <param name="id">User ID</param>
+    /// <returns>Success status</returns>
+    [HttpPost("{id}/deactivate")]
+    [SwaggerOperation(
+        Summary = "Deactivate User",
+        Description = "Deactivates a system user (Backoffice access required)"
+    )]
+    [SwaggerResponse(200, "User deactivated successfully", typeof(ApiResponse<object>))]
+    [SwaggerResponse(404, "User not found", typeof(ApiResponse<object>))]
+    [SwaggerResponse(401, "Unauthorized", typeof(ApiResponse<object>))]
+    [SwaggerResponse(403, "Forbidden - Backoffice access required", typeof(ApiResponse<object>))]
+    public async Task<ActionResult<ApiResponse<object>>> DeactivateUser(string id)
+    {
+        var result = await _userService.DeactivateUserAsync(id);
+        if (!result)
+        {
+            return NotFound(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "User not found"
+            });
+        }
+
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Message = "User deactivated successfully"
+        });
+    }
+
+    
+    /// Activates a user
+    
+    /// <param name="id">User ID</param>
+    /// <returns>Success status</returns>
+    [HttpPost("{id}/activate")]
+    [SwaggerOperation(
+        Summary = "Activate User",
+        Description = "Activates a system user (Backoffice access required)"
+    )]
+    [SwaggerResponse(200, "User activated successfully", typeof(ApiResponse<object>))]
+    [SwaggerResponse(404, "User not found", typeof(ApiResponse<object>))]
+    [SwaggerResponse(401, "Unauthorized", typeof(ApiResponse<object>))]
+    [SwaggerResponse(403, "Forbidden - Backoffice access required", typeof(ApiResponse<object>))]
+    public async Task<ActionResult<ApiResponse<object>>> ActivateUser(string id)
+    {
+        var result = await _userService.ActivateUserAsync(id);
+        if (!result)
+        {
+            return NotFound(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "User not found"
+            });
+        }
+
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Message = "User activated successfully"
+        });
+    }
+
+    
+    /// Deletes a user (hard delete)
     
     /// <param name="id">User ID</param>
     /// <returns>Success status</returns>
     [HttpDelete("{id}")]
     [SwaggerOperation(
         Summary = "Delete User",
-        Description = "Deletes a system user (soft delete by setting inactive)"
+        Description = "Permanently deletes a system user from the database"
     )]
     [SwaggerResponse(200, "User deleted successfully", typeof(ApiResponse<object>))]
     [SwaggerResponse(404, "User not found", typeof(ApiResponse<object>))]

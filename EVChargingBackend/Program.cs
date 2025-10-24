@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,12 @@ builder.Services.AddControllers()
     .AddNewtonsoftJson(options =>
     {
         options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+        // Configure TimeSpan serialization to use string format (HH:mm:ss)
+        options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
+        options.SerializerSettings.DateFormatHandling = Newtonsoft.Json.DateFormatHandling.IsoDateFormat;
+        options.SerializerSettings.DateTimeZoneHandling = Newtonsoft.Json.DateTimeZoneHandling.Utc;
+        // Add custom TimeSpan converter
+        options.SerializerSettings.Converters.Add(new TimeSpanConverter());
     });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -223,3 +230,27 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+/// <summary>
+/// Custom JSON converter for TimeSpan objects to serialize as HH:mm:ss format
+/// </summary>
+public class TimeSpanConverter : JsonConverter<TimeSpan>
+{
+    public override void WriteJson(JsonWriter writer, TimeSpan value, JsonSerializer serializer)
+    {
+        writer.WriteValue(value.ToString(@"hh\:mm\:ss"));
+    }
+
+    public override TimeSpan ReadJson(JsonReader reader, Type objectType, TimeSpan existingValue, bool hasExistingValue, JsonSerializer serializer)
+    {
+        if (reader.TokenType == JsonToken.String)
+        {
+            var stringValue = reader.Value?.ToString();
+            if (TimeSpan.TryParse(stringValue, out var timeSpan))
+            {
+                return timeSpan;
+            }
+        }
+        return TimeSpan.Zero;
+    }
+}
