@@ -48,6 +48,11 @@ public class MongoDbContext
     public IMongoCollection<Booking> Bookings => _database.GetCollection<Booking>("bookings");
 
     /// <summary>
+    /// Gets the StationScheduleOverrides collection
+    /// </summary>
+    public IMongoCollection<StationScheduleOverride> StationScheduleOverrides => _database.GetCollection<StationScheduleOverride>("stationscheduleoverrides");
+
+    /// <summary>
     /// Creates all required indexes for the collections
     /// </summary>
     public async Task CreateIndexesAsync()
@@ -59,6 +64,7 @@ public class MongoDbContext
             await EnsureCollectionExistsAsync("evowners");
             await EnsureCollectionExistsAsync("chargingstations");
             await EnsureCollectionExistsAsync("bookings");
+            await EnsureCollectionExistsAsync("stationscheduleoverrides");
 
             // Users collection indexes
             await CreateIndexIfNotExistsAsync(
@@ -101,6 +107,20 @@ public class MongoDbContext
                 Bookings,
                 Builders<Booking>.IndexKeys.Ascending(b => b.Status).Ascending(b => b.ReservationDateTime),
                 new CreateIndexOptions { Name = "status_reservation_index" }
+            );
+
+            // Compound index for capacity management: station + hour + status
+            await CreateIndexIfNotExistsAsync(
+                Bookings,
+                Builders<Booking>.IndexKeys.Ascending(b => b.StationId).Ascending(b => b.StartHourKey).Ascending(b => b.Status),
+                new CreateIndexOptions { Name = "station_hour_status_index" }
+            );
+
+            // StationScheduleOverrides collection indexes
+            await CreateIndexIfNotExistsAsync(
+                StationScheduleOverrides,
+                Builders<StationScheduleOverride>.IndexKeys.Ascending(o => o.StationId).Ascending(o => o.Date),
+                new CreateIndexOptions { Name = "station_date_index" }
             );
         }
         catch (Exception ex)

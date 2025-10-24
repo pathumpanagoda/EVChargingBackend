@@ -5,6 +5,7 @@
  */
 
 using EVChargingBackend.Data;
+using EVChargingBackend.Helpers;
 using EVChargingBackend.Models;
 using MongoDB.Driver;
 
@@ -38,6 +39,24 @@ public class BookingQueries
             Builders<Booking>.Filter.Eq(b => b.StationId, stationId),
             Builders<Booking>.Filter.Gte(b => b.ReservationDateTime, fromUtc),
             Builders<Booking>.Filter.In(b => b.Status, new[] { BookingStatus.Pending, BookingStatus.Approved })
+        );
+
+        var count = await _collection.CountDocumentsAsync(filter);
+        return count > 0;
+    }
+
+    
+    /// Checks if a charging station has any approved future bookings (for deactivation guard)
+    
+    /// <param name="stationId">Charging station ID</param>
+    /// <param name="fromUtc">Start date for checking (usually current UTC time)</param>
+    /// <returns>True if there are approved future bookings, false otherwise</returns>
+    public async Task<bool> HasApprovedFutureBookingsForStationAsync(string stationId, DateTime fromUtc)
+    {
+        var filter = Builders<Booking>.Filter.And(
+            Builders<Booking>.Filter.Eq(b => b.StationId, stationId),
+            Builders<Booking>.Filter.Gte(b => b.ReservationDateTime, fromUtc),
+            Builders<Booking>.Filter.Eq(b => b.Status, BookingStatus.Approved)
         );
 
         var count = await _collection.CountDocumentsAsync(filter);
@@ -156,6 +175,113 @@ public class BookingQueries
             .Find(filter)
             .SortBy(b => b.ReservationDateTime)
             .ToListAsync();
+    }
+
+    
+    /// Counts approved bookings for a specific station and hour key
+    
+    /// <param name="stationId">Charging station ID</param>
+    /// <param name="hourKey">Hour key in yyyyMMddHH format</param>
+    /// <returns>Number of approved bookings for that station and hour</returns>
+    public async Task<int> CountApprovedForStationAndHourAsync(string stationId, string hourKey)
+    {
+        var filter = Builders<Booking>.Filter.And(
+            Builders<Booking>.Filter.Eq(b => b.StationId, stationId),
+            Builders<Booking>.Filter.Eq(b => b.StartHourKey, hourKey),
+            Builders<Booking>.Filter.Eq(b => b.Status, BookingStatus.Approved)
+        );
+
+        var count = await _collection.CountDocumentsAsync(filter);
+        return (int)count;
+    }
+
+    
+    /// Gets utilization data for a station for the next 7 days
+    
+    /// <param name="stationId">Charging station ID</param>
+    /// <param name="totalSlots">Total slots available at the station</param>
+    /// <returns>Utilization data grouped by hour</returns>
+    public async Task<Dictionary<string, (int Approved, int Pending)>> GetStationUtilizationAsync(string stationId, int totalSlots)
+    {
+        var now = DateTime.UtcNow;
+        var sevenDaysFromNow = now.AddDays(7);
+
+        // Get all bookings for this station in the next 7 days
+        var filter = Builders<Booking>.Filter.And(
+            Builders<Booking>.Filter.Eq(b => b.StationId, stationId),
+            Builders<Booking>.Filter.Gte(b => b.ReservationDateTime, now),
+            Builders<Booking>.Filter.Lt(b => b.ReservationDateTime, sevenDaysFromNow),
+            Builders<Booking>.Filter.In(b => b.Status, new[] { BookingStatus.Pending, BookingStatus.Approved })
+        );
+
+        var bookings = await _collection
+            .Find(filter)
+            .Project(b => new { b.StartHourKey, b.Status, b.ReservationDateTime })
+            .ToListAsync();
+
+        // Group by hour key and count by status
+        var utilization = new Dictionary<string, (int Approved, int Pending)>();
+        
+        foreach (var booking in bookings)
+        {
+            var hourKey = booking.StartHourKey ?? TimeNormalizationHelper.GenerateHourKey(booking.ReservationDateTime);
+            
+            if (!utilization.ContainsKey(hourKey))
+            {
+                utilization[hourKey] = (0, 0);
+            }
+
+            var current = utilization[hourKey];
+            if (booking.Status == BookingStatus.Approved)
+            {
+                utilization[hourKey] = (current.Approved + 1, current.Pending);
+            }
+            else if (booking.Status == BookingStatus.Pending)
+            {
+                utilization[hourKey] = (current.Approved, current.Pending + 1);
+            }
+        }
+
+        return utilization;
+    }
+
+    /// <summary>
+    /// Counts pending bookings for a specific station and hour key
+    /// </summary>
+    /// <param name="stationId">Charging station ID</param>
+    /// <param name="hourKey">Hour key in yyyyMMddHH format</param>
+    /// <returns>Number of pending bookings for that station and hour</returns>
+    public async Task<int> CountPendingForStationAndHourAsync(string stationId, string hourKey)
+    {
+        var filter = Builders<Booking>.Filter.And(
+            Builders<Booking>.Filter.Eq(b => b.StationId, stationId),
+            Builders<Booking>.Filter.Eq(b => b.StartHourKey, hourKey),
+            Builders<Booking>.Filter.Eq(b => b.Status, BookingStatus.Pending)
+        );
+
+        var count = await _collection.CountDocumentsAsync(filter);
+        return (int)count;
+    }
+
+    /// <summary>
+    /// Gets approved bookings for a specific station and date
+    /// </summary>
+    /// <param name="stationId">Charging station ID</param>
+    /// <param name="date">Date to check</param>
+    /// <returns>List of approved bookings for that date</returns>
+    public async Task<List<Booking>> GetApprovedBookingsForDateAsync(string stationId, DateTime date)
+    {
+        var startOfDay = date.Date;
+        var endOfDay = startOfDay.AddDays(1);
+
+        var filter = Builders<Booking>.Filter.And(
+            Builders<Booking>.Filter.Eq(b => b.StationId, stationId),
+            Builders<Booking>.Filter.Gte(b => b.ReservationDateTime, startOfDay),
+            Builders<Booking>.Filter.Lt(b => b.ReservationDateTime, endOfDay),
+            Builders<Booking>.Filter.Eq(b => b.Status, BookingStatus.Approved)
+        );
+
+        return await _collection.Find(filter).ToListAsync();
     }
 }
 

@@ -100,6 +100,7 @@ builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<EVOwnerRepository>();
 builder.Services.AddScoped<ChargingStationRepository>();
 builder.Services.AddScoped<BookingRepository>();
+builder.Services.AddScoped<StationScheduleOverrideRepository>();
 
 // Queries
 builder.Services.AddScoped<BookingQueries>();
@@ -110,6 +111,7 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<EVOwnerService>();
 builder.Services.AddScoped<ChargingStationService>();
 builder.Services.AddScoped<BookingService>();
+builder.Services.AddScoped<StationAvailabilityService>();
 
 // Helpers
 builder.Services.AddScoped<JwtHelper>(provider =>

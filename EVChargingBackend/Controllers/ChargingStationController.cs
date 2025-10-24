@@ -450,4 +450,50 @@ public class ChargingStationController : ControllerBase
             });
         }
     }
+
+    /// <summary>
+    /// Gets utilization data for a charging station
+    /// </summary>
+    /// <param name="id">Station ID</param>
+    /// <returns>Station utilization data for the next 7 days</returns>
+    [HttpGet("{id}/utilization")]
+    [Authorize(Roles = "Backoffice,StationOperator")]
+    [SwaggerOperation(
+        Summary = "Get Station Utilization",
+        Description = "Gets hourly utilization data for a charging station for the next 7 days (Backoffice and StationOperator access required)"
+    )]
+    [SwaggerResponse(200, "Utilization data retrieved successfully", typeof(ApiResponse<StationUtilizationResponse>))]
+    [SwaggerResponse(404, "Charging station not found", typeof(ApiResponse<object>))]
+    [SwaggerResponse(401, "Unauthorized", typeof(ApiResponse<object>))]
+    [SwaggerResponse(403, "Forbidden - insufficient permissions", typeof(ApiResponse<object>))]
+    public async Task<ActionResult<ApiResponse<StationUtilizationResponse>>> GetStationUtilization(string id)
+    {
+        try
+        {
+            var utilization = await _stationService.GetStationUtilizationAsync(id);
+            if (utilization == null)
+            {
+                return NotFound(new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "Charging station not found"
+                });
+            }
+
+            return Ok(new ApiResponse<StationUtilizationResponse>
+            {
+                Success = true,
+                Message = "Utilization data retrieved successfully",
+                Data = utilization
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = ex.Message
+            });
+        }
+    }
 }

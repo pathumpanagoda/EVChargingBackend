@@ -67,10 +67,13 @@ public class BookingService
     /// <returns>Created booking</returns>
     public async Task<Booking> CreateBookingAsync(BookingRequest request, string evOwnerNIC)
     {
+        Console.WriteLine($"CreateBookingAsync called with StationId: {request.StationId}, ReservationDateTime: {request.ReservationDateTime}, EndDateTime: {request.EndDateTime}");
+        
         // Validate request
         var validationResult = await _bookingValidator.ValidateAsync(request);
         if (!validationResult.IsValid)
         {
+            Console.WriteLine($"Validation failed: {string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage))}");
             throw new ValidationException(validationResult.Errors);
         }
 
@@ -78,6 +81,7 @@ public class BookingService
         var evOwner = await _evOwnerRepository.GetByIdAsync(evOwnerNIC);
         if (evOwner == null || !evOwner.IsActive)
         {
+            Console.WriteLine($"EV owner not found or inactive: {evOwnerNIC}");
             throw new ArgumentException("EV owner not found or inactive");
         }
 
@@ -85,38 +89,50 @@ public class BookingService
         var station = await _stationRepository.GetByIdAsync(request.StationId);
         if (station == null || !station.IsActive)
         {
+            Console.WriteLine($"Charging station not found or inactive: {request.StationId}");
             throw new ArgumentException("Charging station not found or inactive");
         }
 
-        // Enforce 7-day rule
-        var sevenDaysFromNow = DateTime.UtcNow.AddDays(7);
-        if (request.ReservationDateTime > sevenDaysFromNow)
+        Console.WriteLine($"Station found: {station.Name}, OpenTime: {station.OpenTime}, CloseTime: {station.CloseTime}");
+
+        // Normalize start time to hour boundary
+        var normalizedStartTime = TimeNormalizationHelper.NormalizeToHour(request.ReservationDateTime);
+        
+        // Calculate end time (normalize to hour boundaries)
+        var normalizedEndTime = TimeNormalizationHelper.CalculateEndTime(normalizedStartTime, request.EndDateTime);
+
+        Console.WriteLine($"Normalized start time: {normalizedStartTime}, Normalized end time: {normalizedEndTime}");
+
+        // Validate 7-day window
+        if (!TimeNormalizationHelper.IsWithin7DayWindow(normalizedStartTime))
         {
+            Console.WriteLine($"7-day window validation failed for: {normalizedStartTime}");
             throw new InvalidOperationException("Reservation must be within 7 days from booking date");
         }
 
-        // Check slot availability
-        var overlappingCount = await _bookingQueries.CountOverlappingApprovedAsync(
-            request.StationId, 
-            request.ReservationDateTime, 
-            request.ReservationDateTime.AddHours(1) // Assuming 1-hour booking slots
-        );
-
-        // Get available slots for the requested date
-        var availableSlots = GetAvailableSlotsForDate(station, request.ReservationDateTime.Date);
-        
-        if (overlappingCount >= availableSlots)
+        // Validate working hours for the entire time range
+        if (!TimeNormalizationHelper.IsTimeRangeWithinWorkingHours(normalizedStartTime, normalizedEndTime, station.OpenTime, station.CloseTime))
         {
-            throw new InvalidOperationException("No slots available");
+            Console.WriteLine($"Working hours validation failed. Start: {normalizedStartTime}, End: {normalizedEndTime}, Open: {station.OpenTime}, Close: {station.CloseTime}");
+            throw new InvalidOperationException("Outside working hours");
         }
 
-        // Create new booking
+        // Generate hour keys for all occupied slots
+        var occupiedHourKeys = TimeNormalizationHelper.GenerateOccupiedHourKeys(normalizedStartTime, normalizedEndTime);
+        var startHourKey = occupiedHourKeys.FirstOrDefault();
+
+        // Note: Pending bookings don't consume capacity, so no capacity check here
+
+        // Create new booking with normalized times
         var booking = new Booking
         {
             EVOwnerNIC = evOwnerNIC,
             StationId = request.StationId,
             BookingDate = DateTime.UtcNow,
-            ReservationDateTime = request.ReservationDateTime,
+            ReservationDateTime = normalizedStartTime, // Use normalized start time
+            EndDateTime = normalizedEndTime, // Store normalized end time
+            StartHourKey = startHourKey, // Store primary hour key for backward compatibility
+            OccupiedHourKeys = occupiedHourKeys, // Store all occupied hour keys
             Status = BookingStatus.Pending,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -198,38 +214,73 @@ public class BookingService
         }
 
         // Enforce 12-hour rule
-        var twelveHoursFromNow = DateTime.UtcNow.AddHours(12);
-        if (booking.ReservationDateTime <= twelveHoursFromNow)
+        if (!TimeNormalizationHelper.IsAtLeast12HoursAhead(booking.ReservationDateTime))
         {
-            throw new InvalidOperationException("Booking cannot be modified within 12 hours of reservation time");
+            throw new InvalidOperationException("Changes allowed only up to 12 hours before start");
         }
 
-        // Enforce 7-day rule
-        var sevenDaysFromNow = DateTime.UtcNow.AddDays(7);
-        if (request.ReservationDateTime > sevenDaysFromNow)
+        // Normalize new start time to hour boundary
+        var normalizedStartTime = TimeNormalizationHelper.NormalizeToHour(request.ReservationDateTime);
+        
+        // Calculate new end time (normalize to hour boundaries)
+        var normalizedEndTime = TimeNormalizationHelper.CalculateEndTime(normalizedStartTime, request.EndDateTime);
+
+        // Validate 7-day window
+        if (!TimeNormalizationHelper.IsWithin7DayWindow(normalizedStartTime))
         {
             throw new InvalidOperationException("Reservation must be within 7 days from booking date");
         }
 
-        // Check slot availability for new time
-        var overlappingCount = await _bookingQueries.CountOverlappingApprovedAsync(
-            booking.StationId,
-            request.ReservationDateTime,
-            request.ReservationDateTime.AddHours(1)
-        );
-
+        // Get station for validation
         var station = await _stationRepository.GetByIdAsync(booking.StationId);
-        if (station != null)
+        if (station == null)
         {
-            var availableSlots = GetAvailableSlotsForDate(station, request.ReservationDateTime.Date);
-            if (overlappingCount >= availableSlots)
+            throw new ArgumentException("Charging station not found");
+        }
+
+        // Validate working hours for the entire time range
+        if (!TimeNormalizationHelper.IsTimeRangeWithinWorkingHours(normalizedStartTime, normalizedEndTime, station.OpenTime, station.CloseTime))
+        {
+            throw new InvalidOperationException("Outside working hours");
+        }
+
+        // Generate new hour keys for all occupied slots
+        var newOccupiedHourKeys = TimeNormalizationHelper.GenerateOccupiedHourKeys(normalizedStartTime, normalizedEndTime);
+        var newStartHourKey = newOccupiedHourKeys.FirstOrDefault();
+
+        // If changing to different slots, check capacity (only for approved bookings)
+        if (booking.Status == BookingStatus.Approved)
+        {
+            var currentOccupiedKeys = booking.OccupiedHourKeys.Any() 
+                ? booking.OccupiedHourKeys 
+                : new List<string> { booking.StartHourKey ?? TimeNormalizationHelper.GenerateHourKey(booking.ReservationDateTime) };
+
+            // Check if any new slots are different from current ones
+            var hasSlotChanges = !newOccupiedHourKeys.SequenceEqual(currentOccupiedKeys);
+
+            if (hasSlotChanges)
             {
-                throw new InvalidOperationException("No slots available");
+                // Check capacity for all new slots
+                foreach (var hourKey in newOccupiedHourKeys)
+                {
+                    var approvedCount = await _bookingQueries.CountApprovedForStationAndHourAsync(
+                        booking.StationId, 
+                        hourKey
+                    );
+
+                    if (approvedCount >= station.TotalSlots)
+                    {
+                        throw new InvalidOperationException($"No slots available for hour {hourKey}");
+                    }
+                }
             }
         }
 
-        // Update booking
-        booking.ReservationDateTime = request.ReservationDateTime;
+        // Update booking with normalized times
+        booking.ReservationDateTime = normalizedStartTime;
+        booking.EndDateTime = normalizedEndTime;
+        booking.StartHourKey = newStartHourKey;
+        booking.OccupiedHourKeys = newOccupiedHourKeys;
         booking.UpdatedAt = DateTime.UtcNow;
 
         var updatedBooking = await _bookingRepository.UpdateAsync(id, booking);
@@ -261,10 +312,9 @@ public class BookingService
         }
 
         // Enforce 12-hour rule
-        var twelveHoursFromNow = DateTime.UtcNow.AddHours(12);
-        if (booking.ReservationDateTime <= twelveHoursFromNow)
+        if (!TimeNormalizationHelper.IsAtLeast12HoursAhead(booking.ReservationDateTime))
         {
-            throw new InvalidOperationException("Booking cannot be cancelled within 12 hours of reservation time");
+            throw new InvalidOperationException("Changes allowed only up to 12 hours before start");
         }
 
         // Cancel booking
@@ -293,20 +343,28 @@ public class BookingService
             throw new InvalidOperationException("Only pending bookings can be approved");
         }
 
-        // Check slot availability before approval
-        var overlappingCount = await _bookingQueries.CountOverlappingApprovedAsync(
-            booking.StationId,
-            booking.ReservationDateTime,
-            booking.ReservationDateTime.AddHours(1)
-        );
-
+        // Get station for capacity check
         var station = await _stationRepository.GetByIdAsync(booking.StationId);
-        if (station != null)
+        if (station == null)
         {
-            var availableSlots = GetAvailableSlotsForDate(station, booking.ReservationDateTime.Date);
-            if (overlappingCount >= availableSlots)
+            throw new ArgumentException("Charging station not found");
+        }
+
+        // Check capacity for all occupied slots
+        var occupiedHourKeys = booking.OccupiedHourKeys.Any() 
+            ? booking.OccupiedHourKeys 
+            : new List<string> { booking.StartHourKey ?? TimeNormalizationHelper.GenerateHourKey(booking.ReservationDateTime) };
+
+        foreach (var hourKey in occupiedHourKeys)
+        {
+            var approvedCount = await _bookingQueries.CountApprovedForStationAndHourAsync(
+                booking.StationId, 
+                hourKey
+            );
+
+            if (approvedCount >= station.TotalSlots)
             {
-                throw new InvalidOperationException("No slots available");
+                throw new InvalidOperationException($"No slots available for hour {hourKey}");
             }
         }
 
@@ -314,6 +372,7 @@ public class BookingService
         var qrPayload = _qrGenerator.GetPayload(booking);
         booking.QRPayload = qrPayload;
         booking.Status = BookingStatus.Approved;
+        booking.ApprovedAt = DateTime.UtcNow;
         booking.UpdatedAt = DateTime.UtcNow;
 
         var updatedBooking = await _bookingRepository.UpdateAsync(id, booking);

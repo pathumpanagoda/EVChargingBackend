@@ -20,10 +20,15 @@ public record BookingRequest
     public string StationId { get; init; } = string.Empty;
 
     
-    /// Date and time for the charging reservation
+    /// Start date and time for the charging reservation
     
-    [Required(ErrorMessage = "Reservation date and time is required")]
+    [Required(ErrorMessage = "Reservation start date and time is required")]
     public DateTime ReservationDateTime { get; init; }
+
+    
+    /// End date and time for the charging reservation (optional - defaults to start + 1 hour)
+    
+    public DateTime? EndDateTime { get; init; }
 }
 
 
@@ -32,10 +37,15 @@ public record BookingRequest
 public record BookingUpdateRequest
 {
     
-    /// New date and time for the charging reservation
+    /// New start date and time for the charging reservation
     
-    [Required(ErrorMessage = "Reservation date and time is required")]
+    [Required(ErrorMessage = "Reservation start date and time is required")]
     public DateTime ReservationDateTime { get; init; }
+
+    
+    /// New end date and time for the charging reservation (optional - defaults to start + 1 hour)
+    
+    public DateTime? EndDateTime { get; init; }
 }
 
 

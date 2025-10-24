@@ -5,6 +5,7 @@
  */
 
 using EVChargingBackend.DTOs;
+using EVChargingBackend.Helpers;
 using EVChargingBackend.Models;
 using EVChargingBackend.Queries;
 using EVChargingBackend.Repositories;
@@ -223,10 +224,10 @@ public class ChargingStationService
             return false;
         }
 
-        // Check if station has active future bookings
-        if (await _bookingQueries.HasActiveFutureBookingsForStationAsync(id, DateTime.UtcNow))
+        // Check if station has approved future bookings (only approved bookings consume capacity)
+        if (await _bookingQueries.HasApprovedFutureBookingsForStationAsync(id, DateTime.UtcNow))
         {
-            throw new InvalidOperationException("Cannot deactivate station with active future bookings");
+            throw new InvalidOperationException("Cannot deactivate station with approved future bookings");
         }
 
         station.IsActive = false;
@@ -283,5 +284,63 @@ public class ChargingStationService
 
         // Permanently delete the station
         return await _stationRepository.DeleteAsync(id);
+    }
+
+    /// <summary>
+    /// Gets utilization data for a charging station
+    /// </summary>
+    /// <param name="id">Station ID</param>
+    /// <returns>Station utilization data for the next 7 days</returns>
+    public async Task<StationUtilizationResponse?> GetStationUtilizationAsync(string id)
+    {
+        var station = await _stationRepository.GetByIdAsync(id);
+        if (station == null)
+        {
+            return null;
+        }
+
+        // Get utilization data from queries
+        var utilizationData = await _bookingQueries.GetStationUtilizationAsync(id, station.TotalSlots);
+
+        // Generate hourly data for the next 7 days
+        var hourlyData = new List<HourlyUtilization>();
+        var now = DateTime.UtcNow;
+        var startOfDay = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc);
+
+        for (int day = 0; day < 7; day++)
+        {
+            var currentDay = startOfDay.AddDays(day);
+            
+            // Generate hours for this day within working hours
+            var currentHour = currentDay.AddHours(station.OpenTime.Hours);
+            var endHour = currentDay.AddHours(station.CloseTime.Hours);
+
+            while (currentHour < endHour)
+            {
+                var hourKey = TimeNormalizationHelper.GenerateHourKey(currentHour);
+                var (approved, pending) = utilizationData.GetValueOrDefault(hourKey, (0, 0));
+
+                hourlyData.Add(new HourlyUtilization
+                {
+                    DateTime = currentHour,
+                    HourKey = hourKey,
+                    ApprovedCount = approved,
+                    PendingCount = pending,
+                    TotalCapacity = station.TotalSlots
+                });
+
+                currentHour = currentHour.AddHours(1);
+            }
+        }
+
+        return new StationUtilizationResponse
+        {
+            StationId = station.Id,
+            StationName = station.Name,
+            TotalSlots = station.TotalSlots,
+            OpenTime = station.OpenTime,
+            CloseTime = station.CloseTime,
+            HourlyData = hourlyData
+        };
     }
 }

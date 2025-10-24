@@ -7,6 +7,8 @@
 using EVChargingBackend.DTOs;
 using EVChargingBackend.Models;
 using EVChargingBackend.Services;
+using EVChargingBackend.Helpers;
+using EVChargingBackend.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -24,16 +26,19 @@ public class BookingController : ControllerBase
 {
     private readonly BookingService _bookingService;
     private readonly ChargingStationService _stationService;
+    private readonly BookingQueries _bookingQueries;
 
     
     /// Initializes a new instance of the BookingController
     
     /// <param name="bookingService">Booking service</param>
     /// <param name="stationService">Charging station service</param>
-    public BookingController(BookingService bookingService, ChargingStationService stationService)
+    /// <param name="bookingQueries">Booking queries</param>
+    public BookingController(BookingService bookingService, ChargingStationService stationService, BookingQueries bookingQueries)
     {
         _bookingService = bookingService;
         _stationService = stationService;
+        _bookingQueries = bookingQueries;
     }
 
     
@@ -56,8 +61,14 @@ public class BookingController : ControllerBase
     {
         try
         {
+            Console.WriteLine($"CreateBooking called with StationId: {request.StationId}, ReservationDateTime: {request.ReservationDateTime}, EndDateTime: {request.EndDateTime}");
+            
             var evOwnerNIC = GetEVOwnerNIC();
+            Console.WriteLine($"EV Owner NIC: {evOwnerNIC}");
+            
             var booking = await _bookingService.CreateBookingAsync(request, evOwnerNIC);
+            Console.WriteLine($"Booking created successfully with ID: {booking.Id}");
+            
             return CreatedAtAction(nameof(GetBooking), new { id = booking.Id }, new ApiResponse<Booking>
             {
                 Success = true,
@@ -65,8 +76,38 @@ public class BookingController : ControllerBase
                 Data = booking
             });
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            Console.WriteLine($"Unauthorized access: {ex.Message}");
+            return Unauthorized(new ApiResponse<object>
+            {
+                Success = false,
+                Message = ex.Message
+            });
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine($"Argument error: {ex.Message}");
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = ex.Message
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine($"Invalid operation: {ex.Message}");
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = ex.Message
+            });
+        }
         catch (Exception ex)
         {
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            
             // Check if it's a slot availability issue
             if (ex.Message == "No slots available")
             {
@@ -466,12 +507,241 @@ public class BookingController : ControllerBase
     }
 
     
+    /// Test endpoint to debug authentication issues
+    
+    /// <returns>Current user information</returns>
+    [HttpGet("debug-auth")]
+    [Authorize]
+    [SwaggerOperation(
+        Summary = "Debug Authentication",
+        Description = "Debug endpoint to check current user authentication status and claims"
+    )]
+    [SwaggerResponse(200, "Authentication info retrieved", typeof(ApiResponse<object>))]
+    [SwaggerResponse(401, "Unauthorized", typeof(ApiResponse<object>))]
+    public ActionResult<ApiResponse<object>> DebugAuth()
+    {
+        var claims = User.Claims.Select(c => new { Type = c.Type, Value = c.Value }).ToList();
+        var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var nic = User.FindFirst("nic")?.Value;
+
+        // Try to get EV owner NIC using the same method as booking creation
+        string? evOwnerNIC = null;
+        try
+        {
+            evOwnerNIC = GetEVOwnerNIC();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error getting EV owner NIC: {ex.Message}");
+        }
+
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Message = "Authentication debug info",
+            Data = new
+            {
+                Claims = claims,
+                Role = userRole,
+                UserId = userId,
+                NIC = nic,
+                EVOwnerNIC = evOwnerNIC,
+                IsAuthenticated = User.Identity?.IsAuthenticated ?? false,
+                AuthenticationType = User.Identity?.AuthenticationType,
+                Name = User.Identity?.Name
+            }
+        });
+    }
+
+    
+    /// Test endpoint to create a simple booking for debugging
+    
+    /// <returns>Test booking result</returns>
+    [HttpPost("test-booking")]
+    [Authorize]
+    [SwaggerOperation(
+        Summary = "Test Booking Creation",
+        Description = "Test endpoint to create a simple booking for debugging purposes"
+    )]
+    [SwaggerResponse(200, "Test booking created", typeof(ApiResponse<object>))]
+    [SwaggerResponse(401, "Unauthorized", typeof(ApiResponse<object>))]
+    public async Task<ActionResult<ApiResponse<object>>> TestBooking()
+    {
+        try
+        {
+            Console.WriteLine("=== Test Booking Debug ===");
+            
+            // Get EV owner NIC
+            var evOwnerNIC = GetEVOwnerNIC();
+            Console.WriteLine($"EV Owner NIC: {evOwnerNIC}");
+            
+            // Create a simple test booking request
+            var testRequest = new BookingRequest
+            {
+                StationId = "test-station-id", // This will likely fail, but we can see the error
+                ReservationDateTime = DateTime.UtcNow.AddHours(1),
+                EndDateTime = DateTime.UtcNow.AddHours(2)
+            };
+            
+            Console.WriteLine($"Test request: StationId={testRequest.StationId}, Start={testRequest.ReservationDateTime}, End={testRequest.EndDateTime}");
+            
+            // Try to create booking
+            var booking = await _bookingService.CreateBookingAsync(testRequest, evOwnerNIC);
+            
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Message = "Test booking created successfully",
+                Data = new { BookingId = booking.Id, EVOwnerNIC = evOwnerNIC }
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Test booking error: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = ex.Message,
+                Data = new { ErrorType = ex.GetType().Name, StackTrace = ex.StackTrace }
+            });
+        }
+    }
+
+    
+    /// Gets available time slots for a station on a specific date
+    
+    /// <param name="stationId">Station ID</param>
+    /// <param name="date">Date to check (YYYY-MM-DD format)</param>
+    /// <returns>Available time slots</returns>
+    [HttpGet("availability/{stationId}")]
+    [Authorize]
+    [SwaggerOperation(
+        Summary = "Get Available Time Slots",
+        Description = "Gets available 1-hour time slots for a station on a specific date"
+    )]
+    [SwaggerResponse(200, "Available slots retrieved", typeof(ApiResponse<object>))]
+    [SwaggerResponse(401, "Unauthorized", typeof(ApiResponse<object>))]
+    public async Task<ActionResult<ApiResponse<object>>> GetAvailableSlots(string stationId, [FromQuery] string date)
+    {
+        try
+        {
+            Console.WriteLine($"Getting availability for station {stationId} on {date}");
+            
+            // Parse the date
+            if (!DateTime.TryParse(date, out var targetDate))
+            {
+                return BadRequest(new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "Invalid date format. Use YYYY-MM-DD"
+                });
+            }
+
+            // Get station details
+            var station = await _stationService.GetStationAsync(stationId);
+            if (station == null)
+            {
+                return NotFound(new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "Station not found"
+                });
+            }
+
+            // Generate time slots (6 AM to 10 PM)
+            var timeSlots = new List<object>();
+            var now = DateTime.UtcNow;
+            var targetDateTime = targetDate.Date;
+
+            for (int hour = 6; hour <= 22; hour++)
+            {
+                var slotTime = targetDateTime.AddHours(hour);
+                var slotEndTime = slotTime.AddHours(1);
+                
+                // Check if slot is in the future and respects 12-hour rule
+                if (slotTime > now && slotTime > now.AddHours(12))
+                {
+                    // Check if slot is within station working hours
+                    var stationOpenTime = targetDateTime.Add(station.OpenTime);
+                    var stationCloseTime = targetDateTime.Add(station.CloseTime);
+                    
+                    if (slotTime >= stationOpenTime && slotEndTime <= stationCloseTime)
+                    {
+                        // Check availability (simplified - you can add actual booking count check here)
+                        var hourKey = TimeNormalizationHelper.GenerateHourKey(slotTime);
+                        var approvedCount = await _bookingQueries.CountApprovedForStationAndHourAsync(stationId, hourKey);
+                        var pendingCount = await _bookingQueries.CountPendingForStationAndHourAsync(stationId, hourKey);
+                        
+                        var isAvailable = (approvedCount + pendingCount) < station.TotalSlots;
+                        
+                        timeSlots.Add(new
+                        {
+                            time = slotTime.ToString("HH:mm"),
+                            available = isAvailable,
+                            approvedBookings = approvedCount,
+                            pendingBookings = pendingCount,
+                            totalSlots = station.TotalSlots
+                        });
+                    }
+                }
+            }
+
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Message = "Available slots retrieved",
+                Data = new
+                {
+                    StationId = stationId,
+                    Date = date,
+                    TimeSlots = timeSlots
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error getting availability: {ex.Message}");
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = ex.Message
+            });
+        }
+    }
+
+    
     /// Gets the EV owner NIC from the current user's claims
     
     /// <returns>EV owner NIC</returns>
     private string GetEVOwnerNIC()
     {
+        // Debug: Log all claims for troubleshooting
+        Console.WriteLine("=== JWT Claims Debug ===");
+        foreach (var claim in User.Claims)
+        {
+            Console.WriteLine($"Claim Type: {claim.Type}, Value: {claim.Value}");
+        }
+        Console.WriteLine("=== End JWT Claims Debug ===");
+        
+        // Try to get NIC from the "nic" claim first
         var nic = User.FindFirst("nic")?.Value;
+        Console.WriteLine($"NIC from 'nic' claim: {nic}");
+        
+        // If not found, try to get it from the NameIdentifier claim (for EV owners, this is the NIC)
+        if (string.IsNullOrEmpty(nic))
+        {
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+            Console.WriteLine($"User role: {userRole}");
+            if (userRole == "EVOwner")
+            {
+                nic = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                Console.WriteLine($"NIC from NameIdentifier claim: {nic}");
+            }
+        }
+        
         if (string.IsNullOrEmpty(nic))
         {
             throw new UnauthorizedAccessException("EV owner NIC not found in token");

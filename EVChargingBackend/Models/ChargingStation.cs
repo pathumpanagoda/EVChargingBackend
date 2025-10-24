@@ -90,6 +90,18 @@ public class ChargingStation
     
     [BsonElement("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    
+    /// Default opening time for the station (e.g., 08:00)
+    
+    [BsonElement("open_time")]
+    public TimeSpan OpenTime { get; set; } = new TimeSpan(8, 0, 0); // 08:00
+
+    
+    /// Default closing time for the station (e.g., 20:00)
+    
+    [BsonElement("close_time")]
+    public TimeSpan CloseTime { get; set; } = new TimeSpan(20, 0, 0); // 20:00
 }
 
 

@@ -52,11 +52,17 @@ public class Booking
     public DateTime BookingDate { get; set; } = DateTime.UtcNow;
 
     
-    /// Date and time of the actual charging reservation
+    /// Start date and time of the actual charging reservation
     
     [BsonElement("reservation_datetime")]
     [Required]
     public DateTime ReservationDateTime { get; set; }
+
+    
+    /// End date and time of the actual charging reservation
+    
+    [BsonElement("end_datetime")]
+    public DateTime? EndDateTime { get; set; }
 
     
     /// Current status of the booking
@@ -82,6 +88,24 @@ public class Booking
     
     [BsonElement("updated_at")]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    
+    /// Canonical hour key for slot capacity management (yyyyMMddHH format)
+    
+    [BsonElement("start_hour_key")]
+    public string? StartHourKey { get; set; }
+
+    
+    /// List of hour keys that this booking occupies (for multi-hour bookings)
+    
+    [BsonElement("occupied_hour_keys")]
+    public List<string> OccupiedHourKeys { get; set; } = new();
+
+    
+    /// Timestamp when the booking was approved (if applicable)
+    
+    [BsonElement("approved_at")]
+    public DateTime? ApprovedAt { get; set; }
 }
 
 
